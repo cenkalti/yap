@@ -47,7 +47,7 @@ def cmd_done(args):
 
 def cmd_undone(args):
     todo_id = int(args[0])
-    conn.execute("update todo set done=0 where id=?", (todo_id,))
+    conn.execute("update todo set done=0 where id=?", (todo_id, ))
 
 
 if __name__ == "__main__":

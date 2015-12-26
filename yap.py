@@ -20,17 +20,6 @@ DATE_FORMAT = '%Y-%m-%d'
 conn = None
 
 
-class Todo(object):
-    def __init__(self, row):
-        self.id = row['id']
-        self.title = row['title']
-        self.done = bool(row['done'])
-        if row['due_date']:
-            self.due_date = datetime.strptime(row['due_date'], DATE_FORMAT)
-        else:
-            self.due_date = None
-
-
 def setup_db():
     current_version = conn.execute("pragma user_version").fetchone()[0]
     statements = [
@@ -75,13 +64,8 @@ def cmd_list(_):
     table = []
     for row in conn.execute("select id, title, done, due_date from todo "
                             "order by due_date desc"):
-        todo = Todo(row)
-        check = u'✓' if todo.done else ''
-        if todo.due_date:
-            due_date = todo.due_date.strftime(DATE_FORMAT)
-        else:
-            due_date = ''
-        table.append([todo.id, check, due_date, todo.title])
+        check = u'✓' if row['done'] else ''
+        table.append([row['id'], check, row['due_date'], row['title']])
     print tabulate(table, headers=['ID', 'Done', u'Due date ▾', 'Title'])
 
 

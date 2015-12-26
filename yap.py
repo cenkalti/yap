@@ -34,7 +34,7 @@ def cmd_add(args):
     conn.execute("insert into todo(title) values(?)", (title, ))
 
 
-def cmd_list(args):
+def cmd_list(_):
     for row in conn.execute("select id, title, done from todo"):
         check = "✓" if row[2] == 1 else " "
         print check, row[0], row[1]
@@ -53,12 +53,12 @@ def cmd_undone(args):
 if __name__ == "__main__":
     conn = sqlite3.connect(os.path.expanduser("~/.yap.db"))
     setup_db()
-    cmd, args = sys.argv[1], sys.argv[2:]
+    cmd, options = sys.argv[1], sys.argv[2:]
     {
         "add": cmd_add,
         "list": cmd_list,
         "done": cmd_done,
         "undone": cmd_undone,
-    }[cmd](args)
+    }[cmd](options)
     conn.commit()
     conn.close()

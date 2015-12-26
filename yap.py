@@ -23,18 +23,25 @@ def create_db():
         done boolean not null default 0)''')
 
 
-def cmd_add(title):
+def cmd_add(args):
+    title = " ".join(args)
     c.execute("insert into todo(title) values(?)", (title,))
 
 
-def cmd_list():
+def cmd_list(args):
     for row in c.execute("select id, title, done from todo"):
         check = "✓" if row[2] == 1 else " "
         print check, row[0], row[1]
 
 
-def cmd_done(todo_id):
+def cmd_done(args):
+    todo_id = int(args[0])
     c.execute("update todo set done=1 where id=?", (todo_id,))
+
+
+def cmd_undone(args):
+    todo_id = int(args[0])
+    c.execute("update todo set done=0 where id=?", (todo_id,))
 
 
 def main():
@@ -43,17 +50,13 @@ def main():
     c = conn.cursor()
     create_db()
 
-    cmd = sys.argv[1]
-    if cmd == "add":
-        title = sys.argv[2]
-        cmd_add(title)
-    elif cmd == "list":
-        cmd_list()
-    elif cmd == "done":
-        todo_id = int(sys.argv[2])
-        cmd_done(todo_id)
-    else:
-        raise ValueError
+    cmd, args = sys.argv[1], sys.argv[2:]
+    {
+        "add": cmd_add,
+        "list": cmd_list,
+        "done": cmd_done,
+        "undone": cmd_undone,
+    }[cmd](args)
 
     conn.commit()
     conn.close()

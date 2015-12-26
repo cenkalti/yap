@@ -13,6 +13,8 @@ import os.path
 import sqlite3
 from datetime import datetime
 
+from tabulate import tabulate
+
 DATE_FORMAT = '%Y-%m-%d'
 
 conn = None
@@ -27,17 +29,6 @@ class Todo(object):
             self.due_date = datetime.strptime(row['due_date'], DATE_FORMAT)
         else:
             self.due_date = None
-
-    def __unicode__(self):
-        check = u'✓' if self.done else ' '
-        if self.due_date:
-            due_date = self.due_date.strftime(DATE_FORMAT)
-        else:
-            due_date = ' ' * 10
-        return "%s %d %s %s" % (check, self.id, due_date, self.title)
-
-    def __str__(self):
-        return self.__unicode__().encode('utf-8')
 
 
 def setup_db():
@@ -81,9 +72,17 @@ def cmd_add(args):
 
 
 def cmd_list(_):
+    table = []
     for row in conn.execute("select id, title, done, due_date from todo "
                             "order by due_date desc"):
-        print Todo(row)
+        todo = Todo(row)
+        check = u'✓' if todo.done else ''
+        if todo.due_date:
+            due_date = todo.due_date.strftime(DATE_FORMAT)
+        else:
+            due_date = ''
+        table.append([todo.id, check, due_date, todo.title])
+    print tabulate(table, headers=['ID', 'Done', u'Due date ▾', 'Title'])
 
 
 def cmd_done(args):

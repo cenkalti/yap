@@ -8,12 +8,14 @@ Usage:
     yap done 1
 
 """
-import sys
 import os.path
 import sqlite3
+import argparse
 from datetime import datetime
 
 from tabulate import tabulate
+
+__version__ = "0.0.0"
 
 DATE_FORMAT = '%Y-%m-%d'
 
@@ -34,41 +36,14 @@ def setup_db():
         conn.execute("pragma user_version = %d" % current_version)
 
 
-def parse_args(args):
-    main, flags = [], {}
-    while args:
-        head = args[0]
-        if head.startswith('-'):
-            flags[head] = args[1]
-            args = args[2:]
-        else:
-            main.append(head)
-            args = args[1:]
-    return main, flags
-
-
-def check_date_format(s):
-    return datetime.strptime(s, DATE_FORMAT).strftime(DATE_FORMAT)
+def cmd_version(args):
+    print __version__
 
 
 def cmd_add(args):
-    main, flags = parse_args(args)
-    title = ' '.join(main)
-    if title == '':
-        raise ValueError('title required')
-    due_date = None
-    start_date = None
-    for flag, value in flags.items():
-        if flag in ('-d', '--due'):
-            # check format
-            due_date = check_date_format(value)
-        elif flag in ('-s', '--start'):
-            start_date = check_date_format(value)
-        else:
-            raise ValueError('unknown flag')
     print "id: %d" % conn.execute(
             "insert into todo(title, due_date, start_date) values(?, ?, ?)",
-            (title, due_date, start_date)).lastrowid
+            (' '.join(args.title), args.due, args.start)).lastrowid
 
 
 def cmd_list(_):
@@ -81,31 +56,57 @@ def cmd_list(_):
 
 
 def cmd_done(args):
-    todo_id = int(args[0])
-    conn.execute("update todo set done=1 where id=?", (todo_id, ))
+    conn.execute("update todo set done=1 where id=?", (args.id, ))
 
 
 def cmd_undone(args):
-    todo_id = int(args[0])
-    conn.execute("update todo set done=0 where id=?", (todo_id, ))
+    conn.execute("update todo set done=0 where id=?", (args.id, ))
 
 
 def cmd_remove(args):
-    todo_id = int(args[0])
-    conn.execute("delete from todo where id=?", (todo_id, ))
+    conn.execute("delete from todo where id=?", (args.id, ))
+
+
+def strdate(s):
+    return datetime.strptime(s, DATE_FORMAT)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    parser_version = subparsers.add_parser('version')
+    parser_version.set_defaults(func=cmd_version)
+
+    parser_add = subparsers.add_parser('add')
+    parser_add.add_argument('title', nargs='+')
+    parser_add.add_argument('-d', '--due', type=strdate)
+    parser_add.add_argument('-s', '--start', type=strdate)
+    parser_add.set_defaults(func=cmd_add)
+
+    parser_done = subparsers.add_parser('done')
+    parser_done.add_argument('id', type=int)
+    parser_done.set_defaults(func=cmd_done)
+
+    parser_undone = subparsers.add_parser('undone')
+    parser_undone.add_argument('id', type=int)
+    parser_undone.set_defaults(func=cmd_undone)
+
+    parser_remove = subparsers.add_parser('remove')
+    parser_remove.add_argument('id', type=int)
+    parser_remove.set_defaults(func=cmd_remove)
+
+    parser_list = subparsers.add_parser('list')
+    parser_list.set_defaults(func=cmd_list)
+
+    args = parser.parse_args()
+    args.func(args)
 
 
 if __name__ == '__main__':
     conn = sqlite3.connect(os.path.expanduser('~/.yap.db'))
     conn.row_factory = sqlite3.Row
     setup_db()
-    cmd, options = sys.argv[1], sys.argv[2:]
-    {
-        'add': cmd_add,
-        'list': cmd_list,
-        'done': cmd_done,
-        'undone': cmd_undone,
-        'remove': cmd_remove,
-    }[cmd](options)
+    parse_args()
     conn.commit()
     conn.close()

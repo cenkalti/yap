@@ -17,8 +17,6 @@ from tabulate import tabulate
 
 DATE_FORMAT = '%Y-%m-%d'
 
-conn = None
-
 
 def setup_db():
     current_version = conn.execute("pragma user_version").fetchone()[0]
@@ -28,6 +26,7 @@ def setup_db():
         title text not null,
         done boolean not null default 0)''',
         '''alter table todo add column due_date text''',
+        '''alter table todo add column start_date text''',
     ]
     for statement in statements[current_version:]:
         conn.execute(statement)
@@ -48,25 +47,37 @@ def parse_args(args):
     return main, flags
 
 
+def check_date_format(s):
+    return datetime.strptime(s, DATE_FORMAT).strftime(DATE_FORMAT)
+
+
 def cmd_add(args):
     main, flags = parse_args(args)
     title = ' '.join(main)
+    if title == '':
+        raise ValueError('title required')
     due_date = None
+    start_date = None
     for flag, value in flags.items():
         if flag in ('-d', '--due'):
-            due_date = datetime.strptime(value, DATE_FORMAT).strftime(DATE_FORMAT)
+            # check format
+            due_date = check_date_format(value)
+        elif flag in ('-s', '--start'):
+            start_date = check_date_format(value)
+        else:
+            raise ValueError('unknown flag')
     print "id: %d" % conn.execute(
-            "insert into todo(title, due_date) values(?, ?)",
-            (title, due_date)).lastrowid
+            "insert into todo(title, due_date, start_date) values(?, ?, ?)",
+            (title, due_date, start_date)).lastrowid
 
 
 def cmd_list(_):
     table = []
-    for row in conn.execute("select id, title, done, due_date from todo "
+    for row in conn.execute("select id, title, done, start_date, due_date from todo "
                             "order by due_date desc"):
         check = u'✓' if row['done'] else ''
-        table.append([row['id'], check, row['due_date'], row['title']])
-    print tabulate(table, headers=['ID', 'Done', u'Due date ▾', 'Title'])
+        table.append([row['id'], check, row['start_date'], row['due_date'], row['title']])
+    print tabulate(table, headers=['ID', 'Done', 'Start Date', u'Due date ▾', 'Title'])
 
 
 def cmd_done(args):

@@ -36,7 +36,7 @@ def setup_db():
         conn.execute("pragma user_version = %d" % current_version)
 
 
-def cmd_version(args):
+def cmd_version(_):
     print __version__
 
 
@@ -48,11 +48,15 @@ def cmd_add(args):
 
 def cmd_list(_):
     table = []
-    for row in conn.execute("select id, title, done, start_date, due_date from todo "
-                            "order by due_date desc"):
+    for row in conn.execute(
+            "select id, title, done, start_date, due_date from todo "
+            "order by due_date desc"):
         check = u'✓' if row['done'] else ''
-        table.append([row['id'], check, row['start_date'], row['due_date'], row['title']])
-    print tabulate(table, headers=['ID', 'Done', 'Start Date', u'Due date ▾', 'Title'])
+        table.append([
+            row['id'], check, row['start_date'],
+            row['due_date'], row['title']])
+    print tabulate(table, headers=[
+        'ID', 'Done', 'Start Date', u'Due date ▾', 'Title'])
 
 
 def cmd_done(args):

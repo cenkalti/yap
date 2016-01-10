@@ -50,7 +50,7 @@ def cmd_list(args):
     table = []
     for row in conn.execute(
             "select id, title, start_date, due_date from todo "
-            "where done=? order by due_date desc", (int(args.done), )):
+            "where done=? order by due_date", (int(args.done), )):
         table.append([
             row['id'], row['start_date'],
             row['due_date'], row['title']])

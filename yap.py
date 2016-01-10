@@ -46,17 +46,16 @@ def cmd_add(args):
             (' '.join(args.title), args.due, args.start)).lastrowid
 
 
-def cmd_list(_):
+def cmd_list(args):
     table = []
     for row in conn.execute(
-            "select id, title, done, start_date, due_date from todo "
-            "order by due_date desc"):
-        check = u'✓' if row['done'] else ''
+            "select id, title, start_date, due_date from todo "
+            "where done=? order by due_date desc", (int(args.done), )):
         table.append([
-            row['id'], check, row['start_date'],
+            row['id'], row['start_date'],
             row['due_date'], row['title']])
     print tabulate(table, headers=[
-        'ID', 'Done', 'Start Date', u'Due date ▾', 'Title'])
+        'ID', 'Start Date', u'Due date ▾', 'Title'])
 
 
 def cmd_done(args):
@@ -83,25 +82,26 @@ def parse_args():
     parser_version.set_defaults(func=cmd_version)
 
     parser_add = subparsers.add_parser('add')
+    parser_add.set_defaults(func=cmd_add)
     parser_add.add_argument('title', nargs='+')
     parser_add.add_argument('-d', '--due', type=strdate)
     parser_add.add_argument('-s', '--start', type=strdate)
-    parser_add.set_defaults(func=cmd_add)
 
     parser_done = subparsers.add_parser('done')
-    parser_done.add_argument('id', type=int)
     parser_done.set_defaults(func=cmd_done)
+    parser_done.add_argument('id', type=int)
 
     parser_undone = subparsers.add_parser('undone')
-    parser_undone.add_argument('id', type=int)
     parser_undone.set_defaults(func=cmd_undone)
+    parser_undone.add_argument('id', type=int)
 
     parser_remove = subparsers.add_parser('remove')
-    parser_remove.add_argument('id', type=int)
     parser_remove.set_defaults(func=cmd_remove)
+    parser_remove.add_argument('id', type=int)
 
     parser_list = subparsers.add_parser('list')
     parser_list.set_defaults(func=cmd_list)
+    parser_list.add_argument('-d', '--done', action='store_true')
 
     args = parser.parse_args()
     args.func(args)

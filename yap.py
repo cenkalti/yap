@@ -9,20 +9,38 @@ Usage:
 
 """
 import os.path
-import sqlite3
 import argparse
 import subprocess
 from datetime import datetime
 
 from tabulate import tabulate
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import Column, Integer, String, Boolean, Date
 
 __version__ = "0.0.0"
 
 DATE_FORMAT = '%Y-%m-%d'
+DB_PATH = os.path.expanduser('~/.yap.db')
+
+Base = declarative_base()
+Session = sessionmaker()
+
+
+class Todo(Base):
+    __tablename__ = 'todo'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    done = Column(Boolean, nullable=False, default=False)
+    due_date = Column(Date)
+    start_date = Column(Date)
 
 
 def setup_db():
-    current_version = conn.execute("pragma user_version").fetchone()[0]
+    session = Session()
+    current_version = session.execute("pragma user_version").fetchone()[0]
     statements = [
         '''create table todo (
         id integer primary key,
@@ -32,9 +50,11 @@ def setup_db():
         '''alter table todo add column start_date text''',
     ]
     for statement in statements[current_version:]:
-        conn.execute(statement)
+        session.execute(statement)
         current_version += 1
-        conn.execute("pragma user_version = %d" % current_version)
+        session.execute("pragma user_version = %d" % current_version)
+    session.commit()
+    session.close()
 
 
 def cmd_version(_):
@@ -42,33 +62,47 @@ def cmd_version(_):
 
 
 def cmd_add(args):
-    print "id: %d" % conn.execute(
-            "insert into todo(title, due_date, start_date) values(?, ?, ?)",
-            (' '.join(args.title), args.due, args.start)).lastrowid
+    todo = Todo()
+    todo.title = ' '.join(args.title)
+    todo.due_date = args.due
+    todo.start_date = args.start
+    session = Session()
+    session.add(todo)
+    session.commit()
+    print "id: %d" % todo.id
+    session.close()
 
 
 def cmd_list(args):
-    table = []
-    for row in conn.execute(
-            "select id, title, start_date, due_date from todo "
-            "where done=? order by due_date", (int(args.done), )):
-        table.append([
-            row['id'], row['start_date'],
-            row['due_date'], row['title']])
-    print tabulate(table, headers=[
-        'ID', 'Start Date', u'Due date ▾', 'Title'])
+    session = Session()
+    items = session.query(Todo)\
+        .filter(Todo.done == args.done)\
+        .order_by(Todo.due_date.asc())\
+        .all()
+    table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
+    print tabulate(table, headers=['ID', 'Start Date', u'Due date ▾', 'Title'])
+    session.close()
 
 
 def cmd_done(args):
-    conn.execute("update todo set done=1 where id=?", (args.id, ))
+    session = Session()
+    session.query(Todo).filter(Todo.id == args.id).update({Todo.done: True})
+    session.commit()
+    session.close()
 
 
 def cmd_undone(args):
-    conn.execute("update todo set done=0 where id=?", (args.id, ))
+    session = Session()
+    session.query(Todo).filter(Todo.id == args.id).update({Todo.done: False})
+    session.commit()
+    session.close()
 
 
 def cmd_remove(args):
-    conn.execute("delete from todo where id=?", (args.id, ))
+    session = Session()
+    session.query(Todo).filter(Todo.id == args.id).delete()
+    session.commit()
+    session.close()
 
 
 def cmd_daemon(args):  # TODO
@@ -125,9 +159,7 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    conn = sqlite3.connect(os.path.expanduser('~/.yap.db'))
-    conn.row_factory = sqlite3.Row
+    engine = create_engine('sqlite:///%s' % DB_PATH, echo=True)
+    Session.configure(bind=engine)
     setup_db()
     parse_args()
-    conn.commit()
-    conn.close()

@@ -11,6 +11,7 @@ Usage:
 import os.path
 import sqlite3
 import argparse
+import subprocess
 from datetime import datetime
 
 from tabulate import tabulate
@@ -70,6 +71,19 @@ def cmd_remove(args):
     conn.execute("delete from todo where id=?", (args.id, ))
 
 
+def cmd_daemon(args):  # TODO
+    pass
+
+
+def run_script(script):  # TODO
+    return subprocess.check_output(
+            ['osascript', '-'], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def display_notification(message, title):  # TODO
+    pass
+
+
 def strdate(s):
     return datetime.strptime(s, DATE_FORMAT)
 
@@ -102,6 +116,9 @@ def parse_args():
     parser_list = subparsers.add_parser('list')
     parser_list.set_defaults(func=cmd_list)
     parser_list.add_argument('-d', '--done', action='store_true')
+
+    parser_daemon = subparsers.add_parser('daemon')
+    parser_daemon.set_defaults(func=cmd_daemon)
 
     args = parser.parse_args()
     args.func(args)

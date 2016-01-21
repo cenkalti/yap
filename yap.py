@@ -17,7 +17,7 @@ from tabulate import tabulate
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, Boolean, Date
+from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
 
 __version__ = "0.0.0"
 
@@ -36,6 +36,7 @@ class Todo(Base):
     done = Column(Boolean, nullable=False, default=False)
     due_date = Column(Date)
     start_date = Column(Date)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
 def setup_db():
@@ -48,6 +49,7 @@ def setup_db():
         done boolean not null default 0)''',
         '''alter table todo add column due_date text''',
         '''alter table todo add column start_date text''',
+        '''alter table todo add column created_at text''',
     ]
     for statement in statements[current_version:]:
         session.execute(statement)
@@ -159,7 +161,7 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///%s' % DB_PATH, echo=True)
+    engine = create_engine('sqlite:///%s' % DB_PATH, echo=False)
     Session.configure(bind=engine)
     setup_db()
     parse_args()

@@ -23,7 +23,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
 __version__ = "0.0.0"
 
 DATE_FORMAT = '%Y-%m-%d'
-DB_PATH = os.path.expanduser('~/.yap.db')
+DB_PATH = os.path.expanduser('~/.yap.sqlite')
 
 Base = declarative_base()
 Session = sessionmaker()

@@ -137,19 +137,22 @@ def cmd_list(args):
 
 def cmd_done(args):
     session = Session()
-    session.query(Todo).filter(Todo.id == args.id).update({Todo.done: True})
+    session.query(Todo).filter(Todo.id.in_(args.id))\
+        .update({Todo.done: True}, synchronize_session=False)
     session.commit()
 
 
 def cmd_undone(args):
     session = Session()
-    session.query(Todo).filter(Todo.id == args.id).update({Todo.done: False})
+    session.query(Todo).filter(Todo.id.in_(args.id))\
+        .update({Todo.done: False}, synchronize_session=False)
     session.commit()
 
 
 def cmd_remove(args):
     session = Session()
-    session.query(Todo).filter(Todo.id == args.id).delete()
+    session.query(Todo).filter(Todo.id.in_(args.id))\
+        .delete(synchronize_session=False)
     session.commit()
 
 
@@ -192,15 +195,15 @@ def parse_args():
 
     parser_done = subparsers.add_parser('done')
     parser_done.set_defaults(func=cmd_done)
-    parser_done.add_argument('id', type=int)
+    parser_done.add_argument('id', type=int, nargs='+')
 
     parser_undone = subparsers.add_parser('undone')
     parser_undone.set_defaults(func=cmd_undone)
-    parser_undone.add_argument('id', type=int)
+    parser_undone.add_argument('id', type=int, nargs='+')
 
     parser_remove = subparsers.add_parser('remove')
     parser_remove.set_defaults(func=cmd_remove)
-    parser_remove.add_argument('id', type=int)
+    parser_remove.add_argument('id', type=int, nargs='+')
 
     parser_list = subparsers.add_parser('list')
     parser_list.set_defaults(func=cmd_list)

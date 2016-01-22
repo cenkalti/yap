@@ -14,7 +14,7 @@ import subprocess
 from datetime import datetime
 
 from tabulate import tabulate
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import create_engine, MetaData, Table, or_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
@@ -114,9 +114,13 @@ def cmd_list(args):
             return -1
         return cmp((a.due_date, a.created_at), (b.due_date, b.created_at))
     session = Session()
-    items = session.query(Todo)\
-        .filter(Todo.done == args.done)\
-        .all()
+    query = session.query(Todo).filter(Todo.done == args.done)
+    if args.start:
+        query = query.filter(Todo.start_date > datetime.today())
+    else:
+        query = query.filter(or_(Todo.start_date == None,
+                                 Todo.start_date <= datetime.today()))
+    items = query.all()
     items.sort(cmp=due_date_first)
     table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
     print tabulate(table, headers=['ID', 'Start Date', u'Due date ▾', 'Title'])
@@ -192,7 +196,10 @@ def parse_args():
 
     parser_list = subparsers.add_parser('list')
     parser_list.set_defaults(func=cmd_list)
-    parser_list.add_argument('-d', '--done', action='store_true')
+    parser_list.add_argument('-d', '--done', action='store_true',
+                             help="show done items")
+    parser_list.add_argument('-s', '--start', action='store_true',
+                             help="show items with forward start date")
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)

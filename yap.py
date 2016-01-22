@@ -79,7 +79,7 @@ def cmd_list(args):
     session = Session()
     items = session.query(Todo)\
         .filter(Todo.done == args.done)\
-        .order_by(Todo.due_date.asc())\
+        .order_by(Todo.due_date.asc(), Todo.created_at.asc())\
         .all()
     table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
     print tabulate(table, headers=['ID', 'Start Date', u'Due date ▾', 'Title'])

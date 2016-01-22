@@ -9,6 +9,7 @@ Usage:
 
 """
 import os
+import sys
 import argparse
 import subprocess
 from datetime import datetime
@@ -203,6 +204,9 @@ def parse_args():
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)
+
+    if len(sys.argv) == 1:
+        sys.argv.append('list')
 
     args = parser.parse_args()
     args.func(args)

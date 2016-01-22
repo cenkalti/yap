@@ -3,7 +3,7 @@
 """
 Command line todo app.
 Usage:
-    yap add deneme bir ki
+    yap add water flowers
     yap list
     yap done 1
 

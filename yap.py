@@ -8,7 +8,7 @@ Usage:
     yap done 1
 
 """
-import os.path
+import os
 import argparse
 import subprocess
 from datetime import datetime
@@ -19,6 +19,7 @@ from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
+from sqlalchemy.schema import CreateTable
 
 __version__ = "0.0.0"
 
@@ -50,7 +51,7 @@ def setup_db():
     )
     session = Session()
     operations = [
-        partial(todo.create, bind=session.bind),
+        partial(create_table, session, todo),
         partial(add_column, session, todo, Todo.due_date),
         partial(add_column, session, todo, Todo.start_date),
         partial(add_column, session, todo, Todo.created_at),
@@ -61,6 +62,11 @@ def setup_db():
         current_version += 1
         session.execute("pragma user_version = %d" % current_version)
         session.commit()
+
+
+def create_table(session, table):
+    sql = str(CreateTable(table).compile(engine))
+    session.execute(sql)
 
 
 def add_column(session, table, column):
@@ -173,10 +179,6 @@ def parse_args():
     args.func(args)
 
 
-def main():
+if __name__ == '__main__':
     setup_db()
     parse_args()
-
-
-if __name__ == '__main__':
-    main()

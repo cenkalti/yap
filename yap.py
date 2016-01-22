@@ -160,8 +160,12 @@ def parse_args():
     args.func(args)
 
 
-if __name__ == '__main__':
+def main():
     engine = create_engine('sqlite:///%s' % DB_PATH, echo=False)
     Session.configure(bind=engine)
     setup_db()
     parse_args()
+
+
+if __name__ == '__main__':
+    main()

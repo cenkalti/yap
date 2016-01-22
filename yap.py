@@ -90,7 +90,20 @@ def cmd_add(args):
     session.add(todo)
     session.commit()
     print "id: %d" % todo.id
-    session.close()
+
+
+def cmd_edit(args):
+    session = Session()
+    todo = session.query(Todo).get(args.id)
+    if not todo:
+        raise ValueError("id not found")
+    if args.title:
+        todo.title = ' '.join(args.title)
+    if args.due:
+        todo.due_date = args.due
+    if args.start:
+        todo.start_date = args.start
+    session.commit()
 
 
 def cmd_list(args):
@@ -108,21 +121,18 @@ def cmd_done(args):
     session = Session()
     session.query(Todo).filter(Todo.id == args.id).update({Todo.done: True})
     session.commit()
-    session.close()
 
 
 def cmd_undone(args):
     session = Session()
     session.query(Todo).filter(Todo.id == args.id).update({Todo.done: False})
     session.commit()
-    session.close()
 
 
 def cmd_remove(args):
     session = Session()
     session.query(Todo).filter(Todo.id == args.id).delete()
     session.commit()
-    session.close()
 
 
 def cmd_daemon(args):  # TODO
@@ -154,6 +164,13 @@ def parse_args():
     parser_add.add_argument('title', nargs='+')
     parser_add.add_argument('-d', '--due', type=strdate)
     parser_add.add_argument('-s', '--start', type=strdate)
+
+    parser_edit = subparsers.add_parser('edit')
+    parser_edit.set_defaults(func=cmd_edit)
+    parser_edit.add_argument('id', type=int)
+    parser_edit.add_argument('-t', '--title', nargs='+')
+    parser_edit.add_argument('-d', '--due', type=strdate)
+    parser_edit.add_argument('-s', '--start', type=strdate)
 
     parser_done = subparsers.add_parser('done')
     parser_done.set_defaults(func=cmd_done)

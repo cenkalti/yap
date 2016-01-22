@@ -43,6 +43,7 @@ class Todo(Base):
 
 
 def setup_db():
+    """Runs each schema operation and version upgrade in single transaction."""
     todo = Table(
             'todo', MetaData(),
             Todo.id.copy(),
@@ -65,11 +66,13 @@ def setup_db():
 
 
 def create_table(session, table):
+    # Table.create() does commit() implicitly, we do not want this.
     sql = str(CreateTable(table).compile(engine))
     session.execute(sql)
 
 
 def add_column(session, table, column):
+    # sqlalchemy has no construct for altering tables :(
     table_name = table.description
     column = column.copy()
     column_name = column.compile(dialect=session.bind.dialect)
@@ -109,6 +112,9 @@ def cmd_edit(args):
 
 def cmd_list(args):
     def due_date_first(a, b):
+        """Compare function for sorting Todo items.
+        Puts items with due date above items with no due date.
+        """
         if a.due_date is None and b.due_date is not None:
             return 1
         if a.due_date is not None and b.due_date is None:
@@ -122,6 +128,7 @@ def cmd_list(args):
         query = query.filter(or_(Todo.start_date == None,
                                  Todo.start_date <= datetime.today()))
     items = query.all()
+    # Cannot get items with due date first with simple ORDER BY.
     items.sort(cmp=due_date_first)
     table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
     print tabulate(table, headers=['ID', 'Start Date', u'Due date ▾', 'Title'])
@@ -205,6 +212,7 @@ def parse_args():
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)
 
+    # If invoked with no subcommand, run list subcommand
     if len(sys.argv) == 1:
         sys.argv.append('list')
 

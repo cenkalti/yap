@@ -107,11 +107,17 @@ def cmd_edit(args):
 
 
 def cmd_list(args):
+    def due_date_first(a, b):
+        if a.due_date is None and b.due_date is not None:
+            return 1
+        if a.due_date is not None and b.due_date is None:
+            return -1
+        return cmp((a.due_date, a.created_at), (b.due_date, b.created_at))
     session = Session()
     items = session.query(Todo)\
         .filter(Todo.done == args.done)\
-        .order_by(Todo.due_date.asc(), Todo.created_at.asc())\
         .all()
+    items.sort(cmp=due_date_first)
     table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
     print tabulate(table, headers=['ID', 'Start Date', u'Due date ▾', 'Title'])
     session.close()

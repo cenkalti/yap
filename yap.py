@@ -25,8 +25,9 @@ __version__ = "0.0.0"
 DATE_FORMAT = '%Y-%m-%d'
 DB_PATH = os.path.expanduser('~/.yap.sqlite')
 
+engine = create_engine('sqlite:///%s' % DB_PATH, echo=False)
+Session = sessionmaker(bind=engine)
 Base = declarative_base()
-Session = sessionmaker()
 
 
 class Todo(Base):
@@ -41,9 +42,8 @@ class Todo(Base):
 
 
 def setup_db():
-    metadata = MetaData()
     todo = Table(
-            'todo', metadata,
+            'todo', MetaData(),
             Todo.id.copy(),
             Todo.title.copy(),
             Todo.done.copy(),
@@ -174,8 +174,6 @@ def parse_args():
 
 
 def main():
-    engine = create_engine('sqlite:///%s' % DB_PATH, echo=False)
-    Session.configure(bind=engine)
     setup_db()
     parse_args()
 

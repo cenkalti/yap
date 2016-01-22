@@ -12,7 +12,6 @@ import os
 import argparse
 import subprocess
 from datetime import datetime
-from functools import partial
 
 from tabulate import tabulate
 from sqlalchemy import create_engine, MetaData, Table
@@ -51,14 +50,14 @@ def setup_db():
     )
     session = Session()
     operations = [
-        partial(create_table, session, todo),
-        partial(add_column, session, todo, Todo.due_date),
-        partial(add_column, session, todo, Todo.start_date),
-        partial(add_column, session, todo, Todo.created_at),
+        (create_table, session, todo),
+        (add_column, session, todo, Todo.due_date),
+        (add_column, session, todo, Todo.start_date),
+        (add_column, session, todo, Todo.created_at),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:
-        operation()
+        operation[0](*operation[1:])
         current_version += 1
         session.execute("pragma user_version = %d" % current_version)
         session.commit()

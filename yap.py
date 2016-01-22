@@ -12,9 +12,10 @@ import os.path
 import argparse
 import subprocess
 from datetime import datetime
+from functools import partial
 
 from tabulate import tabulate
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
@@ -40,23 +41,35 @@ class Todo(Base):
 
 
 def setup_db():
+    metadata = MetaData()
+    todo = Table(
+            'todo', metadata,
+            Todo.id.copy(),
+            Todo.title.copy(),
+            Todo.done.copy(),
+    )
     session = Session()
-    current_version = session.execute("pragma user_version").fetchone()[0]
-    statements = [
-        '''create table todo (
-        id integer primary key,
-        title text not null,
-        done boolean not null default 0)''',
-        '''alter table todo add column due_date text''',
-        '''alter table todo add column start_date text''',
-        '''alter table todo add column created_at text''',
+    operations = [
+        partial(todo.create, bind=session.bind),
+        partial(add_column, session, todo, Todo.due_date),
+        partial(add_column, session, todo, Todo.start_date),
+        partial(add_column, session, todo, Todo.created_at),
     ]
-    for statement in statements[current_version:]:
-        session.execute(statement)
+    current_version = session.execute("pragma user_version").fetchone()[0]
+    for operation in operations[current_version:]:
+        operation()
         current_version += 1
         session.execute("pragma user_version = %d" % current_version)
-    session.commit()
-    session.close()
+        session.commit()
+
+
+def add_column(session, table, column):
+    table_name = table.description
+    column = column.copy()
+    column_name = column.compile(dialect=session.bind.dialect)
+    column_type = column.type.compile(session.bind.dialect)
+    session.execute('ALTER TABLE %s ADD COLUMN %s %s' % (
+        table_name, column_name, column_type))
 
 
 def cmd_version(_):

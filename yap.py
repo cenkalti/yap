@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO base36 ids
 # TODO rename start_date to waiting date
 # TODO move up 3 subcommand (order column)
 # TODO filters (https://taskwarrior.org/docs/syntax.html) (https://taskwarrior.org/docs/filter.html)

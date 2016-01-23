@@ -22,7 +22,6 @@ Usage:
 # TODO auto-completing
 # TODO daemon
 # TODO notifications
-# TODO show command shows all attributes
 
 import os
 import sys
@@ -45,6 +44,11 @@ DB_PATH = os.path.expanduser('~/.yap.sqlite')
 engine = create_engine('sqlite:///%s' % DB_PATH, echo=False)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
+
+
+class TodoNotFoundError(ValueError):
+    def __init__(self, tid):
+        super(TodoNotFoundError, self).__init__("todo id not found: %s" % tid)
 
 
 class Todo(Base):
@@ -116,7 +120,7 @@ def cmd_edit(args):
     session = Session()
     todo = session.query(Todo).get(args.id)
     if not todo:
-        raise ValueError("id not found")
+        raise TodoNotFoundError(args.id)
     if args.title:
         todo.title = ' '.join(args.title)
     if args.due:
@@ -157,6 +161,17 @@ def cmd_list(args):
         for l in table:
             del l[i]
     print tabulate(table, headers=headers)
+    session.close()
+
+
+def cmd_show(args):
+    session = Session()
+    todo = session.query(Todo).get(args.id)
+    if not todo:
+        raise TodoNotFoundError(args.id)
+    for k, v in sorted(vars(todo).items()):
+        if not k.startswith('_'):
+            print "%s: %s" % (k, v)
     session.close()
 
 
@@ -217,6 +232,10 @@ def parse_args():
     parser_edit.add_argument('-t', '--title', nargs='+')
     parser_edit.add_argument('-d', '--due', type=strdate)
     parser_edit.add_argument('-s', '--start', type=strdate)
+
+    parser_show = subparsers.add_parser('show')
+    parser_show.set_defaults(func=cmd_show)
+    parser_show.add_argument('id', type=int)
 
     parser_done = subparsers.add_parser('done')
     parser_done.set_defaults(func=cmd_done)

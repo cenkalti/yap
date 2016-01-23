@@ -8,6 +8,23 @@ Usage:
     yap done 1
 
 """
+
+# TODO base36 ids
+# TODO rename start_date to waiting date
+# TODO move up 3 subcommand (order column)
+# TODO filters (https://taskwarrior.org/docs/syntax.html) (https://taskwarrior.org/docs/filter.html)
+# TODO recurring tasks (https://taskwarrior.org/docs/recurrence.html) (https://taskwarrior.org/docs/durations.html)
+# TODO search
+# TODO context (https://taskwarrior.org/docs/context.html)
+# TODO projects
+# TODO human dates (https://taskwarrior.org/docs/dates.html) (https://taskwarrior.org/docs/named_dates.html)
+# TODO move done tasks to another table
+# TODO color overdue red
+# TODO remove start date column from list output
+# TODO auto-completing
+# TODO daemon
+# TODO notifications
+
 import os
 import sys
 import argparse

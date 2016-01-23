@@ -19,10 +19,10 @@ Usage:
 # TODO human dates (https://taskwarrior.org/docs/dates.html) (https://taskwarrior.org/docs/named_dates.html)
 # TODO move done tasks to another table
 # TODO color overdue red
-# TODO remove start date column from list output
 # TODO auto-completing
 # TODO daemon
 # TODO notifications
+# TODO show command shows all attributes
 
 import os
 import sys
@@ -146,8 +146,17 @@ def cmd_list(args):
     items = query.all()
     # Cannot get items with due date first with simple ORDER BY.
     items.sort(cmp=due_date_first)
+
     table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
-    print tabulate(table, headers=['ID', 'Start Date', u'Due date ▾', 'Title'])
+    headers = ['ID', 'Start Date', u'Due date ▾', 'Title']
+
+    # Hide start date column if not requested explicitly.
+    if not args.start:
+        i = 1
+        del headers[i]
+        for l in table:
+            del l[i]
+    print tabulate(table, headers=headers)
     session.close()
 
 

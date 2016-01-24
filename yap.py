@@ -17,7 +17,7 @@ Usage:
 # TODO context (https://taskwarrior.org/docs/context.html)
 # TODO projects
 # TODO human dates (https://taskwarrior.org/docs/dates.html) (https://taskwarrior.org/docs/named_dates.html)
-# TODO move done tasks to another table
+# TODO move done tasks to another table for smaller ids, keep done tasks for a week
 # TODO color overdue red
 # TODO auto-completing
 # TODO daemon
@@ -41,7 +41,8 @@ __version__ = "0.0.0"
 DATE_FORMAT = '%Y-%m-%d'
 DB_PATH = os.path.expanduser('~/.yap.sqlite')
 
-engine = create_engine('sqlite:///%s' % DB_PATH, echo=False)
+_sql_echo = bool(os.environ.get('YAP_SQL_ECHO'))
+engine = create_engine('sqlite:///%s' % DB_PATH, echo=_sql_echo)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 

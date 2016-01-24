@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO rename start_date to waiting date
 # TODO move up 3 subcommand (order column)
 # TODO filters (https://taskwarrior.org/docs/syntax.html) (https://taskwarrior.org/docs/filter.html)
 # TODO recurring tasks (https://taskwarrior.org/docs/recurrence.html) (https://taskwarrior.org/docs/durations.html)
@@ -61,7 +60,7 @@ class Todo(Base):
     title = Column(String, nullable=False)
     done = Column(Boolean, nullable=False, default=False)
     due_date = Column(Date)
-    start_date = Column(Date)
+    wait_date = Column(Date)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
@@ -73,7 +72,7 @@ class DoneTodo(Todo):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     due_date = Column(Date)
-    start_date = Column(Date)
+    wait_date = Column(Date)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     __mapper_args__ = {'concrete': True}
@@ -93,14 +92,14 @@ def setup_db():
             DoneTodo.id.copy(),
             DoneTodo.title.copy(),
             DoneTodo.due_date.copy(),
-            DoneTodo.start_date.copy(),
+            DoneTodo.wait_date.copy(),
             DoneTodo.created_at.copy(),
     )
     session = Session()
     operations = [
         (create_table, session, todo),
         (add_column, session, todo, Todo.due_date),
-        (add_column, session, todo, Todo.start_date),
+        (add_column, session, todo, Todo.wait_date),
         (add_column, session, todo, Todo.created_at),
         (create_table, session, done_todo),
     ]
@@ -136,7 +135,7 @@ def cmd_add(args):
     todo = Todo()
     todo.title = ' '.join(args.title)
     todo.due_date = args.due
-    todo.start_date = args.start
+    todo.wait_date = args.wait
     session = Session()
     session.add(todo)
     session.commit()
@@ -152,8 +151,8 @@ def cmd_edit(args):
         todo.title = ' '.join(args.title)
     if args.due:
         todo.due_date = args.due
-    if args.start:
-        todo.start_date = args.start
+    if args.wait:
+        todo.wait_date = args.wait
     session.commit()
 
 
@@ -169,20 +168,20 @@ def cmd_list(args):
         return cmp((a.due_date, a.created_at), (b.due_date, b.created_at))
     session = Session()
     query = session.query(Todo).filter(Todo.done == args.done)
-    if args.start:
-        query = query.filter(Todo.start_date > datetime.today())
+    if args.wait:
+        query = query.filter(Todo.wait_date > datetime.today())
     else:
-        query = query.filter(or_(Todo.start_date == None,
-                                 Todo.start_date <= datetime.today()))
+        query = query.filter(or_(Todo.wait_date == None,
+                                 Todo.wait_date <= datetime.today()))
     items = query.all()
     # Cannot get items with due date first with simple ORDER BY.
     items.sort(cmp=due_date_first)
 
-    table = [[t.id, t.start_date, t.due_date, t.title] for t in items]
-    headers = ['ID', 'Start Date', u'Due date ▾', 'Title']
+    table = [[t.id, t.wait_date, t.due_date, t.title] for t in items]
+    headers = ['ID', 'Wait Date', u'Due date ▾', 'Title']
 
-    # Hide start date column if not requested explicitly.
-    if not args.start:
+    # Hide wait date column if not requested explicitly.
+    if not args.wait:
         i = 1
         del headers[i]
         for l in table:
@@ -251,14 +250,14 @@ def parse_args():
     parser_add.set_defaults(func=cmd_add)
     parser_add.add_argument('title', nargs='+')
     parser_add.add_argument('-d', '--due', type=strdate)
-    parser_add.add_argument('-s', '--start', type=strdate)
+    parser_add.add_argument('-w', '--wait', type=strdate)
 
     parser_edit = subparsers.add_parser('edit')
     parser_edit.set_defaults(func=cmd_edit)
     parser_edit.add_argument('id', type=int)
     parser_edit.add_argument('-t', '--title', nargs='+')
     parser_edit.add_argument('-d', '--due', type=strdate)
-    parser_edit.add_argument('-s', '--start', type=strdate)
+    parser_edit.add_argument('-w', '--wait', type=strdate)
 
     parser_show = subparsers.add_parser('show')
     parser_show.set_defaults(func=cmd_show)
@@ -280,8 +279,8 @@ def parse_args():
     parser_list.set_defaults(func=cmd_list)
     parser_list.add_argument('-d', '--done', action='store_true',
                              help="show done items")
-    parser_list.add_argument('-s', '--start', action='store_true',
-                             help="show items with forward start date")
+    parser_list.add_argument('-w', '--wait', action='store_true',
+                             help="show items with forward wait date")
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)

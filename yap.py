@@ -20,8 +20,10 @@ Usage:
 # TODO move done tasks to another table for smaller ids, keep done tasks for a week
 # TODO color overdue red
 # TODO auto-completing
-# TODO daemon
+# TODO daemon subcommand
 # TODO notifications
+# TODO export subcommand
+# TODO import subcommand
 
 import os
 import sys
@@ -63,13 +65,36 @@ class Todo(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+# Done items are moved to a separate table
+# in order to reuse ids in original table.
+class DoneTodo(Todo):
+    __tablename__ = 'done_todo'
+
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    due_date = Column(Date)
+    start_date = Column(Date)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    __mapper_args__ = {'concrete': True}
+
+
 def setup_db():
     """Runs each schema operation and version upgrade in single transaction."""
+    metadata = MetaData()
     todo = Table(
-            'todo', MetaData(),
+            Todo.__tablename__, metadata,
             Todo.id.copy(),
             Todo.title.copy(),
             Todo.done.copy(),
+    )
+    done_todo = Table(
+            DoneTodo.__tablename__, metadata,
+            DoneTodo.id.copy(),
+            DoneTodo.title.copy(),
+            DoneTodo.due_date.copy(),
+            DoneTodo.start_date.copy(),
+            DoneTodo.created_at.copy(),
     )
     session = Session()
     operations = [
@@ -77,6 +102,7 @@ def setup_db():
         (add_column, session, todo, Todo.due_date),
         (add_column, session, todo, Todo.start_date),
         (add_column, session, todo, Todo.created_at),
+        (create_table, session, done_todo),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:

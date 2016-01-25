@@ -249,8 +249,17 @@ def parse_args():
     parser_add = subparsers.add_parser('add')
     parser_add.set_defaults(func=cmd_add)
     parser_add.add_argument('title', nargs='+')
-    parser_add.add_argument('-d', '--due', type=strdate)
-    parser_add.add_argument('-w', '--wait', type=strdate)
+    parser_add.add_argument('-d', '--due', type=strdate,
+                            help="due date")
+    parser_add.add_argument('-w', '--wait', type=strdate,
+                            help="do not show before wait date")
+
+    parser_list = subparsers.add_parser('list')
+    parser_list.set_defaults(func=cmd_list)
+    parser_list.add_argument('-d', '--done', action='store_true',
+                             help="show done items")
+    parser_list.add_argument('-w', '--wait', action='store_true',
+                             help="show waiting items")
 
     parser_edit = subparsers.add_parser('edit')
     parser_edit.set_defaults(func=cmd_edit)
@@ -274,13 +283,6 @@ def parse_args():
     parser_remove = subparsers.add_parser('remove')
     parser_remove.set_defaults(func=cmd_remove)
     parser_remove.add_argument('id', type=int, nargs='+')
-
-    parser_list = subparsers.add_parser('list')
-    parser_list.set_defaults(func=cmd_list)
-    parser_list.add_argument('-d', '--done', action='store_true',
-                             help="show done items")
-    parser_list.add_argument('-w', '--wait', action='store_true',
-                             help="show items with forward wait date")
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)

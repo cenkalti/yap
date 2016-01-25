@@ -61,6 +61,7 @@ class Todo(Base):
     due_date = Column(Date)
     wait_date = Column(Date)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    done_at = Column(DateTime)
 
     @property
     def colored_due_date(self):
@@ -82,6 +83,7 @@ class DoneTodo(Todo):
     due_date = Column(Date)
     wait_date = Column(Date)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    done_at = Column(DateTime)
 
     __mapper_args__ = {'concrete': True}
 
@@ -110,6 +112,8 @@ def setup_db():
         (add_column, session, todo, Todo.wait_date),
         (add_column, session, todo, Todo.created_at),
         (create_table, session, done_todo),
+        (add_column, session, todo, Todo.done_at),
+        (add_column, session, done_todo, DoneTodo.done_at),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:
@@ -229,15 +233,19 @@ def cmd_show(args):
 
 def cmd_done(args):
     session = Session()
-    session.query(Todo).filter(Todo.id.in_(args.id))\
-        .update({Todo.done: True}, synchronize_session=False)
+    session.query(Todo).filter(Todo.id.in_(args.id)).update({
+        Todo.done: True,
+        Todo.done_at: datetime.utcnow(),
+    }, synchronize_session=False)
     session.commit()
 
 
 def cmd_undone(args):
     session = Session()
-    session.query(Todo).filter(Todo.id.in_(args.id))\
-        .update({Todo.done: False}, synchronize_session=False)
+    session.query(Todo).filter(Todo.id.in_(args.id)).update({
+        Todo.done: False,
+        Todo.done_at: None,
+    }, synchronize_session=False)
     session.commit()
 
 

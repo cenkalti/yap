@@ -17,7 +17,6 @@ Usage:
 # TODO projects
 # TODO human dates (https://taskwarrior.org/docs/dates.html) (https://taskwarrior.org/docs/named_dates.html)
 # TODO move done tasks to another table for smaller ids, keep done tasks for a week
-# TODO color overdue red
 # TODO auto-completing
 # TODO daemon subcommand
 # TODO notifications
@@ -28,7 +27,7 @@ import os
 import sys
 import argparse
 import subprocess
-from datetime import datetime
+from datetime import datetime, date
 
 from tabulate import tabulate
 from sqlalchemy import create_engine, MetaData, Table, or_
@@ -62,6 +61,15 @@ class Todo(Base):
     due_date = Column(Date)
     wait_date = Column(Date)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    @property
+    def colored_due_date(self):
+        if self.due_date:
+            if self.due_date == date.today():
+                return yellow(self.due_date)
+            if self.due_date < date.today():
+                return red(self.due_date)
+        return self.due_date
 
 
 # Done items are moved to a separate table
@@ -136,6 +144,14 @@ def get_smallest_empty_id(session, model):
     return i
 
 
+def red(s):
+    return "\033[91m {}\033[00m".format(s)
+
+
+def yellow(s):
+    return "\033[93m {}\033[00m".format(s)
+
+
 def cmd_version(_):
     print __version__
 
@@ -187,7 +203,7 @@ def cmd_list(args):
     # Cannot get items with due date first with simple ORDER BY.
     items.sort(cmp=due_date_first)
 
-    table = [[t.id, t.wait_date, t.due_date, t.title] for t in items]
+    table = [[t.id, t.wait_date, t.colored_due_date, t.title] for t in items]
     headers = ['ID', 'Wait Date', u'Due date ▾', 'Title']
 
     # Hide wait date column if not requested explicitly.

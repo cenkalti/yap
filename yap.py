@@ -127,16 +127,26 @@ def add_column(session, table, column):
         table_name, column_name, column_type))
 
 
+def get_smallest_empty_id(session, model):
+    i = 1
+    all_items = session.query(model).order_by(model.id.asc()).all()
+    all_ids = set([x.id for x in all_items])
+    while i in all_ids:
+        i += 1
+    return i
+
+
 def cmd_version(_):
     print __version__
 
 
 def cmd_add(args):
+    session = Session()
     todo = Todo()
+    todo.id = get_smallest_empty_id(session, Todo)
     todo.title = ' '.join(args.title)
     todo.due_date = args.due
     todo.wait_date = args.wait
-    session = Session()
     session.add(todo)
     session.commit()
     print "id: %d" % todo.id

@@ -9,6 +9,7 @@ Usage:
 
 """
 
+# TODO list correct columns based on flags
 # TODO move done tasks to another table for smaller ids, keep done tasks for a week
 # TODO export subcommand
 # TODO import subcommand
@@ -137,6 +138,10 @@ def add_column(session, table, column):
     column_type = column.type.compile(session.bind.dialect)
     session.execute('ALTER TABLE %s ADD COLUMN %s %s' % (
         table_name, column_name, column_type))
+
+
+def do_maintenance():
+    pass
 
 
 def get_smallest_empty_id(session, model):
@@ -331,4 +336,5 @@ def parse_args():
 
 if __name__ == '__main__':
     setup_db()
+    do_maintenance()
     parse_args()

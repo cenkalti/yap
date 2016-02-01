@@ -41,6 +41,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 __version__ = "0.0.0"
 
 DATE_FORMAT = '%Y-%m-%d'
+DATETIME_FORMAT = DATE_FORMAT + ' %H:%M'
 DB_PATH = os.path.expanduser('~/.yap.sqlite')
 
 _sql_echo = bool(os.environ.get('YAP_SQL_ECHO'))
@@ -110,9 +111,9 @@ class Todo(Base):
 
 def human_datetime(d):
     if d.time() == time.min:
-        fmt = '%Y-%m-%d'
+        fmt = DATE_FORMAT
     else:
-        fmt = '%Y-%m-%d %H:%M'
+        fmt = DATETIME_FORMAT
     return d.strftime(fmt)
 
 

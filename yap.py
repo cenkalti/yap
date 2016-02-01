@@ -77,8 +77,9 @@ class Todo(Base):
 
     @property
     def remaining(self):
-        if self.due_date is not None:
-            return self.due_date - datetime.utcnow()
+        if self.due_date is None:
+            return None
+        return self.due_date - datetime.utcnow()
 
     @hybrid_property
     def waiting(self):

@@ -32,10 +32,10 @@ from datetime import datetime, timedelta, time
 from tabulate import tabulate
 from sqlalchemy import create_engine, MetaData, Table, and_, case
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateTable
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.ext.declarative import declarative_base
 
 __version__ = "0.0.0"
 

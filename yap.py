@@ -26,15 +26,14 @@ Usage:
 import os
 import sys
 import argparse
-import operator
 import subprocess
-from datetime import datetime, date, timedelta, time
+from datetime import datetime, timedelta, time
 
 from tabulate import tabulate
-from sqlalchemy import create_engine, MetaData, Table, and_
+from sqlalchemy import create_engine, MetaData, Table, and_, case
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.schema import CreateTable
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -250,25 +249,25 @@ def cmd_list(args):
     query = session.query(Todo)
     if args.done:
         query = query.filter(Todo.done == True).union(session.query(DoneTodo))
+        query = query.order_by(Todo.done_at.desc())
     elif args.waiting:
         query = query.filter(Todo.waiting == True)
+        query = query.order_by(Todo.wait_date)
     else:
         query = query.filter(Todo.done != True, Todo.waiting != True)
+        # Show items with due date first
+        query = query.order_by(case([(Todo.due_date == None, 0)], 1),
+                               Todo.due_date)
 
     items = query.all()
 
     if args.done:
-        items.sort(key=operator.attrgetter('done_at'), reverse=True)
         headers = ('ID', 'Done at', 'Due date', 'Title')
         attrs = ('id', 'str_done_at', 'str_due_date', 'title')
     elif args.waiting:
-        items.sort(key=operator.attrgetter('wait_date'))
         headers = ('ID', 'Wait date', 'Due date', 'Title')
         attrs = ('id', 'str_wait_date', 'str_due_date', 'title')
     else:
-        # Cannot get items with due date first with simple ORDER BY.
-        # TODO sort in sql: http://stackoverflow.com/questions/1498648/sql-how-to-make-null-values-come-last-when-sorting-ascending
-        items.sort(cmp=_due_date_first)
         headers = ('ID', 'Due date', 'Title')
         attrs = ('id', 'str_due_date', 'title')
 

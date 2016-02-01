@@ -254,7 +254,7 @@ def cmd_undone(args):
     session.commit()
 
 
-def cmd_remove(args):
+def cmd_delete(args):
     session = Session()
     session.query(Todo).filter(Todo.id.in_(args.id))\
         .delete(synchronize_session=False)
@@ -319,9 +319,9 @@ def parse_args():
     parser_undone.set_defaults(func=cmd_undone)
     parser_undone.add_argument('id', type=int, nargs='+')
 
-    parser_remove = subparsers.add_parser('remove')
-    parser_remove.set_defaults(func=cmd_remove)
-    parser_remove.add_argument('id', type=int, nargs='+')
+    parser_delete = subparsers.add_parser('delete')
+    parser_delete.set_defaults(func=cmd_delete)
+    parser_delete.add_argument('id', type=int, nargs='+')
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)

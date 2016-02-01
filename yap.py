@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO list correct columns based on flags
 # TODO move done tasks to another table for smaller ids, keep done tasks for a week
 # TODO export subcommand
 # TODO import subcommand
@@ -27,15 +26,17 @@ Usage:
 import os
 import sys
 import argparse
+import operator
 import subprocess
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, time
 
 from tabulate import tabulate
-from sqlalchemy import create_engine, MetaData, Table, or_
+from sqlalchemy import create_engine, MetaData, Table, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, Boolean, Date, DateTime
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.schema import CreateTable
+from sqlalchemy.ext.hybrid import hybrid_property
 
 __version__ = "0.0.0"
 
@@ -58,20 +59,61 @@ class Todo(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
-    done = Column(Boolean, nullable=False, default=False)
-    due_date = Column(Date)
-    wait_date = Column(Date)
+    due_date = Column(DateTime)
+    wait_date = Column(DateTime)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     done_at = Column(DateTime)
 
+    @hybrid_property
+    def done(self):
+        return self.done_at != None
+
     @property
-    def colored_due_date(self):
+    def overdue(self):
+        if self.due_date is None:
+            return False
+        return self.due_date < datetime.utcnow()
+
+    @property
+    def remaining(self):
+        if self.due_date is not None:
+            return self.due_date - datetime.utcnow()
+
+    @hybrid_property
+    def waiting(self):
+        if self.wait_date is None:
+            return False
+        return self.wait_date > datetime.utcnow()
+
+    @waiting.expression
+    def waiting(cls):
+        return and_(cls.wait_date != None, cls.wait_date > datetime.utcnow())
+
+    @property
+    def str_due_date(self):
         if self.due_date:
-            if self.due_date == date.today():
-                return yellow(self.due_date)
-            if self.due_date < date.today():
-                return red(self.due_date)
-        return self.due_date
+            due_date = human_datetime(self.due_date)
+            if self.overdue:
+                return red(due_date)
+            if self.remaining < timedelta(days=1):
+                return yellow(due_date)
+            return due_date
+
+    @property
+    def str_done_at(self):
+        return human_datetime(self.done_at)
+
+    @property
+    def str_wait_date(self):
+        return human_datetime(self.wait_date)
+
+
+def human_datetime(d):
+    if d.time() == time.min:
+        fmt = '%Y-%m-%d'
+    else:
+        fmt = '%Y-%m-%d %H:%M'
+    return d.strftime(fmt)
 
 
 # Done items are moved to a separate table
@@ -81,8 +123,8 @@ class DoneTodo(Todo):
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
-    due_date = Column(Date)
-    wait_date = Column(Date)
+    due_date = Column(DateTime)
+    wait_date = Column(DateTime)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     done_at = Column(DateTime)
 
@@ -96,7 +138,6 @@ def setup_db():
             Todo.__tablename__, metadata,
             Todo.id.copy(),
             Todo.title.copy(),
-            Todo.done.copy(),
     )
     done_todo = Table(
             DoneTodo.__tablename__, metadata,
@@ -191,36 +232,45 @@ def cmd_edit(args):
     session.commit()
 
 
+def _due_date_first(a, b):
+    """Compare function for sorting Todo items.
+    Puts items with due date above items with no due date.
+    """
+    if a.due_date is None and b.due_date is not None:
+        return 1
+    if a.due_date is not None and b.due_date is None:
+        return -1
+    return cmp((a.due_date, a.created_at), (b.due_date, b.created_at))
+
+
 def cmd_list(args):
-    def due_date_first(a, b):
-        """Compare function for sorting Todo items.
-        Puts items with due date above items with no due date.
-        """
-        if a.due_date is None and b.due_date is not None:
-            return 1
-        if a.due_date is not None and b.due_date is None:
-            return -1
-        return cmp((a.due_date, a.created_at), (b.due_date, b.created_at))
     session = Session()
-    query = session.query(Todo).filter(Todo.done == args.done)
-    if args.wait:
-        query = query.filter(Todo.wait_date > datetime.today())
+    query = session.query(Todo)
+    if args.done:
+        query = query.filter(Todo.done == True).union(session.query(DoneTodo))
+    elif args.waiting:
+        query = query.filter(Todo.waiting == True)
     else:
-        query = query.filter(or_(Todo.wait_date == None,
-                                 Todo.wait_date <= datetime.today()))
+        query = query.filter(Todo.done != True, Todo.waiting != True)
+
     items = query.all()
-    # Cannot get items with due date first with simple ORDER BY.
-    items.sort(cmp=due_date_first)
 
-    table = [[t.id, t.wait_date, t.colored_due_date, t.title] for t in items]
-    headers = ['ID', 'Wait Date', u'Due date ▾', 'Title']
+    if args.done:
+        items.sort(key=operator.attrgetter('done_at'), reverse=True)
+        headers = ('ID', 'Done at', 'Due date', 'Title')
+        attrs = ('id', 'str_done_at', 'str_due_date', 'title')
+    elif args.waiting:
+        items.sort(key=operator.attrgetter('wait_date'))
+        headers = ('ID', 'Wait date', 'Due date', 'Title')
+        attrs = ('id', 'str_wait_date', 'str_due_date', 'title')
+    else:
+        # Cannot get items with due date first with simple ORDER BY.
+        # TODO sort in sql: http://stackoverflow.com/questions/1498648/sql-how-to-make-null-values-come-last-when-sorting-ascending
+        items.sort(cmp=_due_date_first)
+        headers = ('ID', 'Due date', 'Title')
+        attrs = ('id', 'str_due_date', 'title')
 
-    # Hide wait date column if not requested explicitly.
-    if not args.wait:
-        i = 1
-        del headers[i]
-        for l in table:
-            del l[i]
+    table = [[getattr(item, attr) for attr in attrs] for item in items]
     print tabulate(table, headers=headers)
     session.close()
 
@@ -239,7 +289,6 @@ def cmd_show(args):
 def cmd_done(args):
     session = Session()
     session.query(Todo).filter(Todo.id.in_(args.id)).update({
-        Todo.done: True,
         Todo.done_at: datetime.utcnow(),
     }, synchronize_session=False)
     session.commit()
@@ -248,7 +297,6 @@ def cmd_done(args):
 def cmd_undone(args):
     session = Session()
     session.query(Todo).filter(Todo.id.in_(args.id)).update({
-        Todo.done: False,
         Todo.done_at: None,
     }, synchronize_session=False)
     session.commit()
@@ -295,10 +343,11 @@ def parse_args():
 
     parser_list = subparsers.add_parser('list')
     parser_list.set_defaults(func=cmd_list)
-    parser_list.add_argument('-d', '--done', action='store_true',
-                             help="show done items")
-    parser_list.add_argument('-w', '--wait', action='store_true',
-                             help="show waiting items")
+    parser_list_group = parser_list.add_mutually_exclusive_group()
+    parser_list_group.add_argument('-d', '--done', action='store_true',
+                                   help="show done items")
+    parser_list_group.add_argument('-w', '--waiting', action='store_true',
+                                   help="show waiting items")
 
     parser_edit = subparsers.add_parser('edit')
     parser_edit.set_defaults(func=cmd_edit)

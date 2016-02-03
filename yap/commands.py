@@ -1,13 +1,16 @@
+import sys
+import json
 import argparse
 import subprocess
-import sys
 from datetime import datetime
 
 from sqlalchemy import case
+from sqlalchemy.exc import SQLAlchemyError
 from tabulate import tabulate
 
 import yap
 import yap.db
+import yap.json_util
 from yap.models import Todo, Session
 
 
@@ -109,6 +112,29 @@ def cmd_delete(args):
     session.commit()
 
 
+def cmd_export(args):
+    session = Session()
+    d = {'todo': [item.to_dict() for item in session.query(Todo).all()]}
+    session.close()
+    out = json.dumps(d, default=yap.json_util.datetime_encoder, indent=2)
+    args.outfile.write(out)
+    args.outfile.write('\n')
+    args.outfile.close()
+
+
+def cmd_import(args):
+    d = json.load(args.infile, object_hook=yap.json_util.datetime_decoder)
+    for item in d['todo']:
+        session = Session()
+        session.add(Todo.from_dict(item))
+        try:
+            session.commit()
+        except SQLAlchemyError as e:
+            print e
+        finally:
+            session.close()
+
+
 def cmd_daemon(args):  # TODO
     pass
 
@@ -162,6 +188,16 @@ def parse_args():
     parser_delete = subparsers.add_parser('delete')
     parser_delete.set_defaults(func=cmd_delete)
     parser_delete.add_argument('id', type=int, nargs='+')
+
+    parser_export = subparsers.add_parser('export')
+    parser_export.set_defaults(func=cmd_export)
+    parser_export.add_argument('outfile', nargs='?',
+                               type=argparse.FileType('w'), default=sys.stdout)
+
+    parser_import = subparsers.add_parser('import')
+    parser_import.set_defaults(func=cmd_import)
+    parser_import.add_argument('infile', nargs='?',
+                               type=argparse.FileType('r'), default=sys.stdin)
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)

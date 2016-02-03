@@ -12,7 +12,22 @@ _sql_echo = bool(os.environ.get('YAP_SQL_ECHO'))
 engine = create_engine('sqlite:///%s' % yap.DB_PATH, echo=_sql_echo)
 Session = sessionmaker(bind=engine)
 
-Base = declarative_base()
+
+class Base(object):
+    def to_dict(self):
+        d = {}
+        keys = self.__table__.columns.keys()
+        for columnName in keys:
+            d[columnName] = getattr(self, columnName)
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls()
+        for name in d.keys():
+            setattr(obj, name, d[name])
+        return obj
+Base = declarative_base(cls=Base)
 
 
 class Todo(Base):

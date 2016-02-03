@@ -21,6 +21,8 @@ Usage:
 # TODO search
 # TODO filters (https://taskwarrior.org/docs/syntax.html) (https://taskwarrior.org/docs/filter.html)
 # TODO auto-complete commands
+# TODO append and prepend commands
+# TODO note command with $EDITOR
 
 import os
 

@@ -73,10 +73,6 @@ class Todo(Base):
         return human_datetime(self.wait_date)
 
 
-# Done items are moved to a separate table
-# in order to reuse ids in original table.
-
-
 def human_datetime(d):
     if d.time() == time.min:
         fmt = yap.DATE_FORMAT

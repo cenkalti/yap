@@ -87,6 +87,7 @@ def cmd_done(args):
     session = Session()
     items = session.query(Todo).filter(Todo.id.in_(args.id)).all()
     for item in items:
+        # Make done item's id negative so new items can reuse positive ids.
         item.id = yap.db.get_next_negative_id(session, Todo)
         item.done_at = datetime.utcnow()
     session.commit()

@@ -25,6 +25,9 @@ class Todo(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     done_at = Column(DateTime)
 
+    def __repr__(self):
+        return "<%s id=%i>" % (self.__class__.__name__, self.id)
+
     @hybrid_property
     def done(self):
         return self.done_at != None
@@ -79,10 +82,21 @@ class DoneTodo(Todo):
     title = Column(String, nullable=False)
     due_date = Column(DateTime)
     wait_date = Column(DateTime)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False)
     done_at = Column(DateTime)
 
     __mapper_args__ = {'concrete': True}
+
+    @classmethod
+    def from_todo(cls, todo):
+        new = cls()
+        new.id = -todo.id
+        new.title = todo.title
+        new.due_date = todo.due_date
+        new.wait_date = todo.wait_date
+        new.created_at = todo.created_at
+        new.done_at = todo.done_at
+        return new
 
 
 def human_datetime(d):

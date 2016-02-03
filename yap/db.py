@@ -1,6 +1,7 @@
 from sqlalchemy import MetaData, Table
 from sqlalchemy.sql.ddl import CreateTable
 
+import yap
 from yap.models import Todo, DoneTodo, engine, Session
 
 
@@ -55,7 +56,16 @@ def add_column(session, table, column):
 
 
 def do_maintenance():
-    pass
+    session = Session()
+    items = session.query(Todo)\
+        .filter(Todo.done == True)\
+        .order_by(Todo.done_at.desc())\
+        .offset(yap.LIST_DONE_MAX)\
+        .all()
+    for todo in items:
+        session.add(DoneTodo.from_todo(todo))
+        session.delete(todo)
+    session.commit()
 
 
 def get_smallest_empty_id(session, model):

@@ -1,7 +1,7 @@
-import sys
-import json
 import argparse
+import json
 import subprocess
+import sys
 from datetime import datetime
 
 from sqlalchemy import case
@@ -11,6 +11,7 @@ from tabulate import tabulate
 import yap
 import yap.db
 import yap.json_util
+import yap.exceptions
 from yap.models import Todo, Session
 
 
@@ -53,7 +54,7 @@ def cmd_show(args):
     session = Session()
     todo = session.query(Todo).get(args.id)
     if not todo:
-        raise TodoNotFoundError(args.id)
+        raise yap.exceptions.TodoNotFoundError(args.id)
     for k, v in sorted(vars(todo).items()):
         if not k.startswith('_'):
             print "%s: %s" % (k, v)
@@ -76,7 +77,7 @@ def cmd_edit(args):
     session = Session()
     todo = session.query(Todo).get(args.id)
     if not todo:
-        raise TodoNotFoundError(args.id)
+        raise yap.exceptions.TodoNotFoundError(args.id)
     if args.title:
         todo.title = ' '.join(args.title)
     if args.due:
@@ -90,7 +91,7 @@ def cmd_append(args):
     session = Session()
     todo = session.query(Todo).get(args.id)
     if not todo:
-        raise TodoNotFoundError(args.id)
+        raise yap.exceptions.TodoNotFoundError(args.id)
     todo.title = "%s %s" % (todo.title, ' '.join(args.title))
     session.commit()
 
@@ -99,7 +100,7 @@ def cmd_prepend(args):
     session = Session()
     todo = session.query(Todo).get(args.id)
     if not todo:
-        raise TodoNotFoundError(args.id)
+        raise yap.exceptions.TodoNotFoundError(args.id)
     todo.title = "%s %s" % (' '.join(args.title), todo.title)
     session.commit()
 
@@ -141,6 +142,7 @@ def cmd_export(args):
 
 
 def cmd_import(args):
+    has_error = False
     d = json.load(args.infile, object_hook=yap.json_util.datetime_decoder)
     for item in d['todo']:
         session = Session()
@@ -149,8 +151,11 @@ def cmd_import(args):
             session.commit()
         except SQLAlchemyError as e:
             print e
+            has_error = True
         finally:
             session.close()
+    if has_error:
+        raise yap.exceptions.TodoImportError
 
 
 def cmd_daemon(args):  # TODO
@@ -235,12 +240,12 @@ def parse_args():
         sys.argv.append('list')
 
     args = parser.parse_args()
-    args.func(args)
-
-
-class TodoNotFoundError(ValueError):
-    def __init__(self, tid):
-        super(TodoNotFoundError, self).__init__("todo id not found: %s" % tid)
+    try:
+        args.func(args)
+    except yap.exceptions.YapError as e:
+        sys.stderr.write(str(e))
+        sys.stderr.write('\n')
+        sys.exit(1)
 
 
 def run_script(script):  # TODO

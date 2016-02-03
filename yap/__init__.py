@@ -9,10 +9,9 @@ Usage:
 
 """
 
-# TODO refactor exceptions
-# TODO move up 3 subcommand (order column)
 # TODO context (https://taskwarrior.org/docs/context.html)
 # TODO recurring tasks (https://taskwarrior.org/docs/recurrence.html) (https://taskwarrior.org/docs/durations.html)
+# TODO move up 3 subcommand (order column)
 # TODO human dates (https://taskwarrior.org/docs/dates.html) (https://taskwarrior.org/docs/named_dates.html)
 # TODO daemon subcommand
 # TODO notifications

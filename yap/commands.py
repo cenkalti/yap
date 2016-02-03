@@ -1,4 +1,5 @@
 import argparse
+import operator
 import subprocess
 import sys
 from datetime import datetime
@@ -17,21 +18,30 @@ def cmd_version(_):
 
 def cmd_list(args):
     session = Session()
-    query = session.query(Todo)
     if args.done:
-        query = query.filter(Todo.done == True).union(session.query(DoneTodo))
-        query = query.order_by(Todo.done_at.desc())
-        query = query.limit(yap.LIST_DONE_MAX)
+        query1 = session.query(Todo)\
+            .filter(Todo.done == True)\
+            .order_by(Todo.done_at.desc())\
+            .limit(yap.LIST_DONE_MAX)
+        query2 = session.query(DoneTodo)\
+            .order_by(DoneTodo.done_at.desc())\
+            .limit(yap.LIST_DONE_MAX)
+        items = query1.all() + query2.all()
+        items.sort(key=operator.attrgetter('done_at'), reverse=True)
+        if len(items) > yap.LIST_DONE_MAX:
+            items = items[:yap.LIST_DONE_MAX]
     elif args.waiting:
-        query = query.filter(Todo.waiting == True)
-        query = query.order_by(Todo.wait_date)
+        items = session.query(Todo) \
+            .filter(Todo.waiting == True) \
+            .order_by(Todo.wait_date) \
+            .all()
     else:
-        query = query.filter(Todo.done != True, Todo.waiting != True)
-        # Show items with due date first
-        query = query.order_by(case([(Todo.due_date == None, 0)], 1),
-                               Todo.due_date)
-
-    items = query.all()
+        items = session.query(Todo)\
+            .filter(Todo.done != True, Todo.waiting != True)\
+            .order_by(
+                case([(Todo.due_date == None, 0)], 1),
+                Todo.due_date)\
+            .all()
 
     if args.done:
         headers = ('ID', 'Done at', 'Due date', 'Title')

@@ -6,10 +6,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
-from yap import DATE_FORMAT, DATETIME_FORMAT, DB_PATH
+import yap
 
 _sql_echo = bool(os.environ.get('YAP_SQL_ECHO'))
-engine = create_engine('sqlite:///%s' % DB_PATH, echo=_sql_echo)
+engine = create_engine('sqlite:///%s' % yap.DB_PATH, echo=_sql_echo)
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
@@ -87,9 +87,9 @@ class DoneTodo(Todo):
 
 def human_datetime(d):
     if d.time() == time.min:
-        fmt = DATE_FORMAT
+        fmt = yap.DATE_FORMAT
     else:
-        fmt = DATETIME_FORMAT
+        fmt = yap.DATETIME_FORMAT
     return d.strftime(fmt)
 
 

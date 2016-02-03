@@ -19,6 +19,8 @@ def cmd_version(_):
 def cmd_list(args):
     session = Session()
     if args.done:
+        headers = ('ID', 'Done at', 'Due date', 'Title')
+        attrs = ('id', 'str_done_at', 'str_due_date', 'title')
         query1 = session.query(Todo)\
             .filter(Todo.done == True)\
             .order_by(Todo.done_at.desc())\
@@ -31,11 +33,15 @@ def cmd_list(args):
         if len(items) > yap.LIST_DONE_MAX:
             items = items[:yap.LIST_DONE_MAX]
     elif args.waiting:
+        headers = ('ID', 'Wait date', 'Due date', 'Title')
+        attrs = ('id', 'str_wait_date', 'str_due_date', 'title')
         items = session.query(Todo) \
             .filter(Todo.waiting == True) \
             .order_by(Todo.wait_date) \
             .all()
     else:
+        headers = ('ID', 'Due date', 'Title')
+        attrs = ('id', 'str_due_date', 'title')
         items = session.query(Todo)\
             .filter(Todo.done != True, Todo.waiting != True)\
             .order_by(
@@ -43,19 +49,9 @@ def cmd_list(args):
                 Todo.due_date)\
             .all()
 
-    if args.done:
-        headers = ('ID', 'Done at', 'Due date', 'Title')
-        attrs = ('id', 'str_done_at', 'str_due_date', 'title')
-    elif args.waiting:
-        headers = ('ID', 'Wait date', 'Due date', 'Title')
-        attrs = ('id', 'str_wait_date', 'str_due_date', 'title')
-    else:
-        headers = ('ID', 'Due date', 'Title')
-        attrs = ('id', 'str_due_date', 'title')
-
     table = [[getattr(item, attr) for attr in attrs] for item in items]
-    print tabulate(table, headers=headers)
     session.close()
+    print tabulate(table, headers=headers)
 
 
 def cmd_show(args):

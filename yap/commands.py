@@ -15,38 +15,13 @@ def cmd_version(_):
     print yap.__version__
 
 
-def cmd_add(args):
-    session = Session()
-    todo = Todo()
-    todo.id = yap.db.get_smallest_empty_id(session, Todo)
-    todo.title = ' '.join(args.title)
-    todo.due_date = args.due
-    todo.wait_date = args.wait
-    session.add(todo)
-    session.commit()
-    print "id: %d" % todo.id
-
-
-def cmd_edit(args):
-    session = Session()
-    todo = session.query(Todo).get(args.id)
-    if not todo:
-        raise TodoNotFoundError(args.id)
-    if args.title:
-        todo.title = ' '.join(args.title)
-    if args.due:
-        todo.due_date = args.due
-    if args.wait:
-        todo.wait_date = args.wait
-    session.commit()
-
-
 def cmd_list(args):
     session = Session()
     query = session.query(Todo)
     if args.done:
         query = query.filter(Todo.done == True).union(session.query(DoneTodo))
         query = query.order_by(Todo.done_at.desc())
+        query = query.limit(yap.LIST_DONE_MAX)
     elif args.waiting:
         query = query.filter(Todo.waiting == True)
         query = query.order_by(Todo.wait_date)
@@ -82,6 +57,32 @@ def cmd_show(args):
         if not k.startswith('_'):
             print "%s: %s" % (k, v)
     session.close()
+
+
+def cmd_add(args):
+    session = Session()
+    todo = Todo()
+    todo.id = yap.db.get_smallest_empty_id(session, Todo)
+    todo.title = ' '.join(args.title)
+    todo.due_date = args.due
+    todo.wait_date = args.wait
+    session.add(todo)
+    session.commit()
+    print "id: %d" % todo.id
+
+
+def cmd_edit(args):
+    session = Session()
+    todo = session.query(Todo).get(args.id)
+    if not todo:
+        raise TodoNotFoundError(args.id)
+    if args.title:
+        todo.title = ' '.join(args.title)
+    if args.due:
+        todo.due_date = args.due
+    if args.wait:
+        todo.wait_date = args.wait
+    session.commit()
 
 
 def cmd_done(args):

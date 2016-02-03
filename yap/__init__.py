@@ -30,3 +30,4 @@ __version__ = "0.0.0"
 DATE_FORMAT = '%Y-%m-%d'
 DATETIME_FORMAT = DATE_FORMAT + ' %H:%M'
 DB_PATH = os.path.expanduser('~/.yap.sqlite')
+LIST_DONE_MAX = 20

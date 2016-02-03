@@ -75,28 +75,6 @@ class Todo(Base):
 
 # Done items are moved to a separate table
 # in order to reuse ids in original table.
-class DoneTodo(Todo):
-    __tablename__ = 'done_todo'
-
-    id = Column(Integer, primary_key=True)
-    title = Column(String, nullable=False)
-    due_date = Column(DateTime)
-    wait_date = Column(DateTime)
-    created_at = Column(DateTime, nullable=False)
-    done_at = Column(DateTime)
-
-    __mapper_args__ = {'concrete': True}
-
-    @classmethod
-    def from_todo(cls, todo):
-        new = cls()
-        new.id = -todo.id
-        new.title = todo.title
-        new.due_date = todo.due_date
-        new.wait_date = todo.wait_date
-        new.created_at = todo.created_at
-        new.done_at = todo.done_at
-        return new
 
 
 def human_datetime(d):

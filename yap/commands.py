@@ -1,5 +1,4 @@
 import argparse
-import operator
 import subprocess
 import sys
 from datetime import datetime
@@ -9,7 +8,7 @@ from tabulate import tabulate
 
 import yap
 import yap.db
-from yap.models import Todo, DoneTodo, Session
+from yap.models import Todo, Session
 
 
 def cmd_version(_):
@@ -18,37 +17,30 @@ def cmd_version(_):
 
 def cmd_list(args):
     session = Session()
+    query = session.query(Todo)
     if args.done:
         headers = ('ID', 'Done at', 'Due date', 'Title')
         attrs = ('id', 'str_done_at', 'str_due_date', 'title')
-        query1 = session.query(Todo)\
+        query = query\
             .filter(Todo.done == True)\
             .order_by(Todo.done_at.desc())\
             .limit(yap.LIST_DONE_MAX)
-        query2 = session.query(DoneTodo)\
-            .order_by(DoneTodo.done_at.desc())\
-            .limit(yap.LIST_DONE_MAX)
-        items = query1.all() + query2.all()
-        items.sort(key=operator.attrgetter('done_at'), reverse=True)
-        if len(items) > yap.LIST_DONE_MAX:
-            items = items[:yap.LIST_DONE_MAX]
     elif args.waiting:
         headers = ('ID', 'Wait date', 'Due date', 'Title')
         attrs = ('id', 'str_wait_date', 'str_due_date', 'title')
-        items = session.query(Todo) \
-            .filter(Todo.waiting == True) \
-            .order_by(Todo.wait_date) \
-            .all()
+        query = query\
+            .filter(Todo.waiting == True)\
+            .order_by(Todo.wait_date)
     else:
         headers = ('ID', 'Due date', 'Title')
         attrs = ('id', 'str_due_date', 'title')
-        items = session.query(Todo)\
+        query = query\
             .filter(Todo.done != True, Todo.waiting != True)\
-            .order_by(
+            .order_by(  # Show items with order date first
                 case([(Todo.due_date == None, 0)], 1),
-                Todo.due_date)\
-            .all()
+                Todo.due_date)
 
+    items = query.all()
     table = [[getattr(item, attr) for attr in attrs] for item in items]
     session.close()
     print tabulate(table, headers=headers)
@@ -93,17 +85,19 @@ def cmd_edit(args):
 
 def cmd_done(args):
     session = Session()
-    session.query(Todo).filter(Todo.id.in_(args.id)).update({
-        Todo.done_at: datetime.utcnow(),
-    }, synchronize_session=False)
+    items = session.query(Todo).filter(Todo.id.in_(args.id)).all()
+    for item in items:
+        item.id = yap.db.get_next_negative_id(session, Todo)
+        item.done_at = datetime.utcnow()
     session.commit()
 
 
 def cmd_undone(args):
     session = Session()
-    session.query(Todo).filter(Todo.id.in_(args.id)).update({
-        Todo.done_at: None,
-    }, synchronize_session=False)
+    items = session.query(Todo).filter(Todo.id.in_(args.id)).all()
+    for item in items:
+        item.id = yap.db.get_smallest_empty_id(session, Todo)
+        item.done_at = None
     session.commit()
 
 

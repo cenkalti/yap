@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO revise undone command for handling both tables
 # TODO export subcommand
 # TODO import subcommand
 # TODO move up 3 subcommand (order column)

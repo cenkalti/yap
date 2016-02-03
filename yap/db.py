@@ -1,8 +1,7 @@
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, func
 from sqlalchemy.sql.ddl import CreateTable
 
-import yap
-from yap.models import Todo, DoneTodo, engine, Session
+from yap.models import Todo, engine, Session
 
 
 def setup():
@@ -13,23 +12,13 @@ def setup():
             Todo.id.copy(),
             Todo.title.copy(),
     )
-    done_todo = Table(
-            DoneTodo.__tablename__, metadata,
-            DoneTodo.id.copy(),
-            DoneTodo.title.copy(),
-            DoneTodo.due_date.copy(),
-            DoneTodo.wait_date.copy(),
-            DoneTodo.created_at.copy(),
-    )
     session = Session()
     operations = [
         (create_table, session, todo),
         (add_column, session, todo, Todo.due_date),
         (add_column, session, todo, Todo.wait_date),
         (add_column, session, todo, Todo.created_at),
-        (create_table, session, done_todo),
         (add_column, session, todo, Todo.done_at),
-        (add_column, session, done_todo, DoneTodo.done_at),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:
@@ -55,19 +44,6 @@ def add_column(session, table, column):
         table_name, column_name, column_type))
 
 
-def do_maintenance():
-    session = Session()
-    items = session.query(Todo)\
-        .filter(Todo.done == True)\
-        .order_by(Todo.done_at.desc())\
-        .offset(yap.LIST_DONE_MAX)\
-        .all()
-    for todo in items:
-        session.add(DoneTodo.from_todo(todo))
-        session.delete(todo)
-    session.commit()
-
-
 def get_smallest_empty_id(session, model):
     i = 1
     all_items = session.query(model).order_by(model.id.asc()).all()
@@ -75,3 +51,8 @@ def get_smallest_empty_id(session, model):
     while i in all_ids:
         i += 1
     return i
+
+
+def get_next_negative_id(session, model):
+    query = session.query(func.min(model.id))
+    return query.scalar() - 1

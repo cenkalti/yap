@@ -86,6 +86,24 @@ def cmd_edit(args):
     session.commit()
 
 
+def cmd_append(args):
+    session = Session()
+    todo = session.query(Todo).get(args.id)
+    if not todo:
+        raise TodoNotFoundError(args.id)
+    todo.title = "%s %s" % (todo.title, ' '.join(args.title))
+    session.commit()
+
+
+def cmd_prepend(args):
+    session = Session()
+    todo = session.query(Todo).get(args.id)
+    if not todo:
+        raise TodoNotFoundError(args.id)
+    todo.title = "%s %s" % (' '.join(args.title), todo.title)
+    session.commit()
+
+
 def cmd_done(args):
     session = Session()
     items = session.query(Todo).filter(Todo.id.in_(args.id)).all()
@@ -172,6 +190,16 @@ def parse_args():
     parser_edit.add_argument('-t', '--title', nargs='+')
     parser_edit.add_argument('-d', '--due', type=strdate)
     parser_edit.add_argument('-w', '--wait', type=strdate)
+
+    parser_append = subparsers.add_parser('append')
+    parser_append.set_defaults(func=cmd_append)
+    parser_append.add_argument('id', type=int)
+    parser_append.add_argument('title', nargs='+')
+
+    parser_prepend = subparsers.add_parser('prepend')
+    parser_prepend.set_defaults(func=cmd_prepend)
+    parser_prepend.add_argument('id', type=int)
+    parser_prepend.add_argument('title', nargs='+')
 
     parser_show = subparsers.add_parser('show')
     parser_show.set_defaults(func=cmd_show)

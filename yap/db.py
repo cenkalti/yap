@@ -54,5 +54,5 @@ def get_smallest_empty_id(session, model):
 
 
 def get_next_negative_id(session, model):
-    query = session.query(func.min(model.id))
-    return query.scalar() - 1
+    i = session.query(func.min(model.id)).filter(model.id < 0).scalar() or 0
+    return i - 1

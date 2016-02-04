@@ -28,4 +28,5 @@ __version__ = "0.0.0"
 DATE_FORMAT = '%Y-%m-%d'
 DATETIME_FORMAT = DATE_FORMAT + ' %H:%M'
 DB_PATH = os.path.expanduser('~/.yap.sqlite')
+CONTEXT_PATH = os.path.expanduser('~/.yap.context')
 LIST_DONE_MAX = 20

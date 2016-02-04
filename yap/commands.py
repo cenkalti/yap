@@ -1,7 +1,9 @@
-import argparse
-import json
-import subprocess
+import os
 import sys
+import json
+import errno
+import argparse
+import subprocess
 from datetime import datetime
 
 from sqlalchemy import case
@@ -158,6 +160,21 @@ def cmd_import(args):
         raise yap.exceptions.TodoImportError
 
 
+def cmd_context(args):
+    if args.name:
+        with open(yap.CONTEXT_PATH, 'w') as f:
+            f.write(args.name)
+    elif args.clear:
+        os.unlink(yap.CONTEXT_PATH)
+    else:
+        try:
+            with open(yap.CONTEXT_PATH, 'r') as f:
+                print f.read()
+        except IOError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+
 def cmd_daemon(args):  # TODO
     pass
 
@@ -231,6 +248,11 @@ def parse_args():
     parser_import.set_defaults(func=cmd_import)
     parser_import.add_argument('infile', nargs='?',
                                type=argparse.FileType('r'), default=sys.stdin)
+
+    parser_context = subparsers.add_parser('context')
+    parser_context.set_defaults(func=cmd_context)
+    parser_context.add_argument('name', nargs='?')
+    parser_context.add_argument('-c', '--clear', action='store_true')
 
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)

@@ -21,7 +21,13 @@ def cmd_version(_):
     print yap.__version__
 
 
-def cmd_list(args):
+def cmd_next(args):
+    args.done = None
+    args.waiting = None
+    cmd_list(args, limit=args.n)
+
+
+def cmd_list(args, limit=None):
     session = Session()
     query = session.query(Todo)
 
@@ -50,6 +56,9 @@ def cmd_list(args):
             .order_by(  # Show items with order date first
                 case([(Todo.due_date == None, 0)], 1),
                 Todo.due_date)
+
+    if limit:
+        query = query.limit(limit)
 
     items = query.all()
     table = [[getattr(item, attr) for attr in attrs] for item in items]
@@ -223,6 +232,10 @@ def parse_args():
     parser_list_group.add_argument('-w', '--waiting', action='store_true',
                                    help="show waiting items")
 
+    parser_next = subparsers.add_parser('next')
+    parser_next.set_defaults(func=cmd_next)
+    parser_next.add_argument('n', type=int, default=1, nargs='?')
+
     parser_edit = subparsers.add_parser('edit')
     parser_edit.set_defaults(func=cmd_edit)
     parser_edit.add_argument('id', type=int)
@@ -275,9 +288,9 @@ def parse_args():
     parser_daemon = subparsers.add_parser('daemon')
     parser_daemon.set_defaults(func=cmd_daemon)
 
-    # If invoked with no subcommand, run list subcommand
+    # If invoked with no subcommand, run next subcommand
     if len(sys.argv) == 1:
-        sys.argv.append('list')
+        sys.argv.append('next')
 
     args = parser.parse_args()
     try:

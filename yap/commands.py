@@ -24,6 +24,11 @@ def cmd_version(_):
 def cmd_list(args):
     session = Session()
     query = session.query(Todo)
+
+    context = get_context()
+    if context:
+        query = query.filter(Todo.context == context)
+
     if args.done:
         headers = ('ID', 'Done at', 'Due date', 'Title')
         attrs = ('id', 'str_done_at', 'str_due_date', 'title')
@@ -70,6 +75,7 @@ def cmd_add(args):
     todo.title = ' '.join(args.title)
     todo.due_date = args.due
     todo.wait_date = args.wait
+    todo.context = get_context()
     session.add(todo)
     session.commit()
     print "id: %d" % todo.id
@@ -167,12 +173,16 @@ def cmd_context(args):
     elif args.clear:
         os.unlink(yap.CONTEXT_PATH)
     else:
-        try:
-            with open(yap.CONTEXT_PATH, 'r') as f:
-                print f.read()
-        except IOError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        print get_context()
+
+
+def get_context():
+    try:
+        with open(yap.CONTEXT_PATH, 'r') as f:
+            return f.read()
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
 
 
 def cmd_daemon(args):  # TODO

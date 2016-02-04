@@ -19,6 +19,7 @@ def setup():
         (add_column, session, todo, Todo.wait_date),
         (add_column, session, todo, Todo.created_at),
         (add_column, session, todo, Todo.done_at),
+        (add_column, session, todo, Todo.context),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:

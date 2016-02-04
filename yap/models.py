@@ -39,6 +39,7 @@ class Todo(Base):
     wait_date = Column(DateTime)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     done_at = Column(DateTime)
+    context = Column(String)
 
     def __repr__(self):
         return "<%s id=%i>" % (self.__class__.__name__, self.id)

@@ -30,8 +30,8 @@ class Base(object):
 Base = declarative_base(cls=Base)
 
 
-class Todo(Base):
-    __tablename__ = 'todo'
+class Task(Base):
+    __tablename__ = 'task'
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)

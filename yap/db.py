@@ -1,25 +1,25 @@
 from sqlalchemy import MetaData, Table, func
 from sqlalchemy.sql.ddl import CreateTable
 
-from yap.models import Todo, engine, Session
+from yap.models import Task, engine, Session
 
 
 def setup():
     """Runs each schema operation and version upgrade in single transaction."""
     metadata = MetaData()
-    todo = Table(
-            Todo.__tablename__, metadata,
-            Todo.id.copy(),
-            Todo.title.copy(),
+    task = Table(
+            Task.__tablename__, metadata,
+            Task.id.copy(),
+            Task.title.copy(),
     )
     session = Session()
     operations = [
-        (create_table, session, todo),
-        (add_column, session, todo, Todo.due_date),
-        (add_column, session, todo, Todo.wait_date),
-        (add_column, session, todo, Todo.created_at),
-        (add_column, session, todo, Todo.done_at),
-        (add_column, session, todo, Todo.context),
+        (create_table, session, task),
+        (add_column, session, task, Task.due_date),
+        (add_column, session, task, Task.wait_date),
+        (add_column, session, task, Task.created_at),
+        (add_column, session, task, Task.done_at),
+        (add_column, session, task, Task.context),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:

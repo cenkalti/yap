@@ -14,7 +14,7 @@ import yap
 import yap.db
 import yap.json_util
 import yap.exceptions
-from yap.models import Todo, Session
+from yap.models import Task, Session
 
 
 def cmd_version(_):
@@ -29,49 +29,49 @@ def cmd_next(args):
 
 def cmd_list(args, limit=None):
     session = Session()
-    query = session.query(Todo)
+    query = session.query(Task)
 
     context = get_context()
     if context:
-        query = query.filter(Todo.context == context)
+        query = query.filter(Task.context == context)
 
     if args.done:
         headers = ('ID', 'Done at', 'Due date', 'Context', 'Title')
         attrs = ('id', 'str_done_at', 'str_due_date', 'context', 'title')
         query = query\
-            .filter(Todo.done == True)\
-            .order_by(Todo.done_at.desc())\
+            .filter(Task.done == True)\
+            .order_by(Task.done_at.desc())\
             .limit(yap.LIST_DONE_MAX)
     elif args.waiting:
         headers = ('ID', 'Wait date', 'Due date', 'Context', 'Title')
         attrs = ('id', 'str_wait_date', 'str_due_date', 'context', 'title')
         query = query\
-            .filter(Todo.waiting == True)\
-            .order_by(Todo.wait_date)
+            .filter(Task.waiting == True)\
+            .order_by(Task.wait_date)
     else:
         headers = ('ID', 'Due date', 'Context', 'Title')
         attrs = ('id', 'str_due_date', 'context', 'title')
         query = query\
-            .filter(Todo.done != True, Todo.waiting != True)\
-            .order_by(  # Show items with order date first
-                case([(Todo.due_date == None, 0)], 1),
-                Todo.due_date)
+            .filter(Task.done != True, Task.waiting != True)\
+            .order_by(  # Show tasks with order date first
+                case([(Task.due_date == None, 0)], 1),
+                Task.due_date)
 
     if limit:
         query = query.limit(limit)
 
-    items = query.all()
-    table = [[getattr(item, attr) for attr in attrs] for item in items]
+    tasks = query.all()
+    table = [[getattr(task, attr) for attr in attrs] for task in tasks]
     session.close()
     print tabulate(table, headers=headers)
 
 
 def cmd_show(args):
     session = Session()
-    todo = session.query(Todo).get(args.id)
-    if not todo:
-        raise yap.exceptions.TodoNotFoundError(args.id)
-    for k, v in sorted(vars(todo).items()):
+    task = session.query(Task).get(args.id)
+    if not task:
+        raise yap.exceptions.TaskNotFoundError(args.id)
+    for k, v in sorted(vars(task).items()):
         if not k.startswith('_'):
             print "%s: %s" % (k, v)
     session.close()
@@ -79,82 +79,82 @@ def cmd_show(args):
 
 def cmd_add(args):
     session = Session()
-    todo = Todo()
-    todo.id = yap.db.get_smallest_empty_id(session, Todo)
-    todo.title = ' '.join(args.title)
-    todo.due_date = args.due
-    todo.wait_date = args.wait
-    todo.context = args.context or get_context()
-    session.add(todo)
+    task = Task()
+    task.id = yap.db.get_smallest_empty_id(session, Task)
+    task.title = ' '.join(args.title)
+    task.due_date = args.due
+    task.wait_date = args.wait
+    task.context = args.context or get_context()
+    session.add(task)
     session.commit()
-    print "id: %d" % todo.id
+    print "id: %d" % task.id
 
 
 def cmd_edit(args):
     session = Session()
-    todo = session.query(Todo).get(args.id)
-    if not todo:
-        raise yap.exceptions.TodoNotFoundError(args.id)
+    task = session.query(Task).get(args.id)
+    if not task:
+        raise yap.exceptions.TaskNotFoundError(args.id)
 
     if args.title is not None:
-        todo.title = None if args.title == '' else ' '.join(args.title)
+        task.title = None if args.title == '' else ' '.join(args.title)
     if args.due is not None:
-        todo.due_date = None if args.due == '' else args.due
+        task.due_date = None if args.due == '' else args.due
     if args.wait is not None:
-        todo.wait_date = None if args.wait == '' else args.wait
+        task.wait_date = None if args.wait == '' else args.wait
     if args.context is not None:
-        todo.context = None if args.context == '' else args.context
+        task.context = None if args.context == '' else args.context
 
     session.commit()
 
 
 def cmd_append(args):
     session = Session()
-    todo = session.query(Todo).get(args.id)
-    if not todo:
-        raise yap.exceptions.TodoNotFoundError(args.id)
-    todo.title = "%s %s" % (todo.title, ' '.join(args.title))
+    task = session.query(Task).get(args.id)
+    if not task:
+        raise yap.exceptions.TaskNotFoundError(args.id)
+    task.title = "%s %s" % (task.title, ' '.join(args.title))
     session.commit()
 
 
 def cmd_prepend(args):
     session = Session()
-    todo = session.query(Todo).get(args.id)
-    if not todo:
-        raise yap.exceptions.TodoNotFoundError(args.id)
-    todo.title = "%s %s" % (' '.join(args.title), todo.title)
+    task = session.query(Task).get(args.id)
+    if not task:
+        raise yap.exceptions.TaskNotFoundError(args.id)
+    task.title = "%s %s" % (' '.join(args.title), task.title)
     session.commit()
 
 
 def cmd_done(args):
     session = Session()
-    items = session.query(Todo).filter(Todo.id.in_(args.id)).all()
-    for item in items:
-        # Make done item's id negative so new items can reuse positive ids.
-        item.id = yap.db.get_next_negative_id(session, Todo)
-        item.done_at = datetime.utcnow()
+    tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
+    for task in tasks:
+        # Make done task's id negative so new tasks can reuse positive ids.
+        task.id = yap.db.get_next_negative_id(session, Task)
+        task.done_at = datetime.utcnow()
     session.commit()
 
 
 def cmd_undone(args):
     session = Session()
-    items = session.query(Todo).filter(Todo.id.in_(args.id)).all()
-    for item in items:
-        item.id = yap.db.get_smallest_empty_id(session, Todo)
-        item.done_at = None
+    tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
+    for task in tasks:
+        task.id = yap.db.get_smallest_empty_id(session, Task)
+        task.done_at = None
     session.commit()
 
 
 def cmd_delete(args):
     session = Session()
-    session.query(Todo).filter(Todo.id.in_(args.id))\
+    session.query(Task).filter(Task.id.in_(args.id))\
         .delete(synchronize_session=False)
     session.commit()
 
 
 def cmd_export(args):
     session = Session()
-    d = {'todo': [item.to_dict() for item in session.query(Todo).all()]}
+    d = {'task': [task.to_dict() for task in session.query(Task).all()]}
     session.close()
     out = json.dumps(d, default=yap.json_util.datetime_encoder, indent=2)
     args.outfile.write(out)
@@ -165,9 +165,9 @@ def cmd_export(args):
 def cmd_import(args):
     has_error = False
     d = json.load(args.infile, object_hook=yap.json_util.datetime_decoder)
-    for item in d['todo']:
+    for task in d['task']:
         session = Session()
-        session.add(Todo.from_dict(item))
+        session.add(Task.from_dict(task))
         try:
             session.commit()
         except SQLAlchemyError as e:
@@ -176,7 +176,7 @@ def cmd_import(args):
         finally:
             session.close()
     if has_error:
-        raise yap.exceptions.TodoImportError
+        raise yap.exceptions.TaskImportError
 
 
 def cmd_context(args):
@@ -228,9 +228,9 @@ def parse_args():
     parser_list.set_defaults(func=cmd_list)
     parser_list_group = parser_list.add_mutually_exclusive_group()
     parser_list_group.add_argument('-d', '--done', action='store_true',
-                                   help="show done items")
+                                   help="show done tasks")
     parser_list_group.add_argument('-w', '--waiting', action='store_true',
-                                   help="show waiting items")
+                                   help="show waiting tasks")
 
     parser_next = subparsers.add_parser('next')
     parser_next.set_defaults(func=cmd_next)

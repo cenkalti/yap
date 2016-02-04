@@ -2,12 +2,12 @@ class YapError(Exception):
     pass
 
 
-class TodoNotFoundError(YapError):
+class TaskNotFoundError(YapError):
     def __init__(self, tid):
         self.id = tid
-        super(TodoNotFoundError, self).__init__("todo id not found: %s" % tid)
+        super(TaskNotFoundError, self).__init__("task id not found: %s" % tid)
 
 
-class TodoImportError(YapError):
+class TaskImportError(YapError):
     def __init__(self):
-        super(TodoImportError, self).__init__("import completed with errors")
+        super(TaskImportError, self).__init__("import completed with errors")

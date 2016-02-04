@@ -75,7 +75,7 @@ def cmd_add(args):
     todo.title = ' '.join(args.title)
     todo.due_date = args.due
     todo.wait_date = args.wait
-    todo.context = get_context()
+    todo.context = args.context or get_context()
     session.add(todo)
     session.commit()
     print "id: %d" % todo.id
@@ -86,12 +86,16 @@ def cmd_edit(args):
     todo = session.query(Todo).get(args.id)
     if not todo:
         raise yap.exceptions.TodoNotFoundError(args.id)
-    if args.title:
-        todo.title = ' '.join(args.title)
-    if args.due:
-        todo.due_date = args.due
-    if args.wait:
-        todo.wait_date = args.wait
+
+    if args.title is not None:
+        todo.title = None if args.title == '' else ' '.join(args.title)
+    if args.due is not None:
+        todo.due_date = None if args.due == '' else args.due
+    if args.wait is not None:
+        todo.wait_date = None if args.wait == '' else args.wait
+    if args.context is not None:
+        todo.context = None if args.context == '' else args.context
+
     session.commit()
 
 
@@ -190,6 +194,8 @@ def cmd_daemon(args):  # TODO
 
 
 def strdate(s):
+    if s == '':
+        return ''
     return datetime.strptime(s, yap.DATE_FORMAT)
 
 
@@ -207,6 +213,7 @@ def parse_args():
                             help="due date")
     parser_add.add_argument('-w', '--wait', type=strdate,
                             help="do not show before wait date")
+    parser_add.add_argument('-c', '--context')
 
     parser_list = subparsers.add_parser('list')
     parser_list.set_defaults(func=cmd_list)
@@ -222,6 +229,7 @@ def parse_args():
     parser_edit.add_argument('-t', '--title', nargs='+')
     parser_edit.add_argument('-d', '--due', type=strdate)
     parser_edit.add_argument('-w', '--wait', type=strdate)
+    parser_edit.add_argument('-c', '--context')
 
     parser_append = subparsers.add_parser('append')
     parser_append.set_defaults(func=cmd_append)

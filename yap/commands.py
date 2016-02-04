@@ -30,21 +30,21 @@ def cmd_list(args):
         query = query.filter(Todo.context == context)
 
     if args.done:
-        headers = ('ID', 'Done at', 'Due date', 'Title')
-        attrs = ('id', 'str_done_at', 'str_due_date', 'title')
+        headers = ('ID', 'Done at', 'Due date', 'Context', 'Title')
+        attrs = ('id', 'str_done_at', 'str_due_date', 'context', 'title')
         query = query\
             .filter(Todo.done == True)\
             .order_by(Todo.done_at.desc())\
             .limit(yap.LIST_DONE_MAX)
     elif args.waiting:
-        headers = ('ID', 'Wait date', 'Due date', 'Title')
-        attrs = ('id', 'str_wait_date', 'str_due_date', 'title')
+        headers = ('ID', 'Wait date', 'Due date', 'Context', 'Title')
+        attrs = ('id', 'str_wait_date', 'str_due_date', 'context', 'title')
         query = query\
             .filter(Todo.waiting == True)\
             .order_by(Todo.wait_date)
     else:
-        headers = ('ID', 'Due date', 'Title')
-        attrs = ('id', 'str_due_date', 'title')
+        headers = ('ID', 'Due date', 'Context', 'Title')
+        attrs = ('id', 'str_due_date', 'context', 'title')
         query = query\
             .filter(Todo.done != True, Todo.waiting != True)\
             .order_by(  # Show items with order date first

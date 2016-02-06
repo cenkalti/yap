@@ -33,31 +33,35 @@ def cmd_list(args, limit=None):
     session = Session()
     query = session.query(Task)
 
+    headers = ['ID']
+    attrs = ['id']
+
     context = get_context()
     if context:
         query = query.filter(Task.context == context)
 
     if args.done:
-        headers = ('ID', 'Done at', 'Due date', 'Context', 'Title')
-        attrs = ('id', 'str_done_at', 'str_due_date', 'context', 'title')
+        headers.append('Done at')
+        attrs.append('str_done_at')
         query = query\
             .filter(Task.done == True)\
             .order_by(Task.done_at.desc())\
             .limit(yap.LIST_DONE_MAX)
     elif args.waiting:
-        headers = ('ID', 'Wait date', 'Due date', 'Context', 'Title')
-        attrs = ('id', 'str_wait_date', 'str_due_date', 'context', 'title')
+        headers.append('Wait date')
+        attrs.append('str_wait_date')
         query = query\
             .filter(Task.waiting == True)\
             .order_by(Task.wait_date)
     else:
-        headers = ('ID', 'Due date', 'Context', 'Title')
-        attrs = ('id', 'str_due_date', 'context', 'title')
         query = query\
             .filter(Task.done != True, Task.waiting != True)\
             .order_by(  # Show tasks with order date first
                 case([(Task.due_date == None, 0)], 1),
                 Task.due_date)
+
+    headers.extend(['Due date', 'Title'])
+    attrs.extend(['str_due_date', 'title'])
 
     if limit:
         query = query.limit(limit)

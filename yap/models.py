@@ -66,6 +66,10 @@ class Task(Base):
     def done(self):
         return self.done_at != None
 
+    @hybrid_property
+    def recurring(self):
+        return self.recur != None
+
     @property
     def overdue(self):
         if self.due_date is None:
@@ -108,7 +112,7 @@ class Task(Base):
 
 
 def str_datetime(dt):
-    if dt.time() == time.min:
+    if dt.time() == time.max:
         fmt = isodate.DATE_EXT_COMPLETE
     else:
         fmt = isodate.DATE_EXT_COMPLETE + 'T' + isodate.TIME_EXT_COMPLETE

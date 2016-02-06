@@ -223,7 +223,7 @@ def delete_with_empty_string(f):
 def date_or_datetime(s):
     if 'T' in s:
         return isodate.parse_datetime(s)
-    return datetime.combine(isodate.parse_date(s), time.min)
+    return datetime.combine(isodate.parse_date(s), time.max)
 
 
 @delete_with_empty_string

@@ -1,8 +1,10 @@
 import os
 from datetime import datetime, timedelta, time
 
+import isodate
 from sqlalchemy import Column, Integer, String, DateTime, and_, create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -30,6 +32,21 @@ class Base(object):
 Base = declarative_base(cls=Base)
 
 
+class Duration(TypeDecorator):
+
+    impl = String
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return isodate.duration_isoformat(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        return isodate.parse_duration(value)
+
+
 class Task(Base):
     __tablename__ = 'task'
 
@@ -40,6 +57,7 @@ class Task(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     done_at = Column(DateTime)
     context = Column(String)
+    recur = Column(Duration)
 
     def __repr__(self):
         return "<%s id=%i>" % (self.__class__.__name__, self.id)
@@ -73,7 +91,7 @@ class Task(Base):
     @property
     def str_due_date(self):
         if self.due_date:
-            due_date = human_datetime(self.due_date)
+            due_date = str_datetime(self.due_date)
             if self.overdue:
                 return red(due_date)
             if self.remaining < timedelta(days=1):
@@ -82,19 +100,19 @@ class Task(Base):
 
     @property
     def str_done_at(self):
-        return human_datetime(self.done_at)
+        return str_datetime(self.done_at)
 
     @property
     def str_wait_date(self):
-        return human_datetime(self.wait_date)
+        return str_datetime(self.wait_date)
 
 
-def human_datetime(d):
-    if d.time() == time.min:
-        fmt = yap.DATE_FORMAT
+def str_datetime(dt):
+    if dt.time() == time.min:
+        fmt = isodate.DATE_EXT_COMPLETE
     else:
-        fmt = yap.DATETIME_FORMAT
-    return d.strftime(fmt)
+        fmt = isodate.DATE_EXT_COMPLETE + 'T' + isodate.TIME_EXT_COMPLETE
+    return isodate.strftime(dt, fmt)
 
 
 def red(s):

@@ -20,6 +20,7 @@ def setup():
         (add_column, session, task, Task.created_at),
         (add_column, session, task, Task.done_at),
         (add_column, session, task, Task.context),
+        (add_column, session, task, Task.recur),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:

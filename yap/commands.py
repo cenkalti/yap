@@ -4,8 +4,10 @@ import json
 import errno
 import argparse
 import subprocess
-from datetime import datetime
+from datetime import datetime, time
+from functools import wraps
 
+import isodate
 from sqlalchemy import case
 from sqlalchemy.exc import SQLAlchemyError
 from tabulate import tabulate
@@ -85,9 +87,13 @@ def cmd_add(args):
     task.due_date = args.due
     task.wait_date = args.wait
     task.context = args.context or get_context()
+    task.recur = args.recur
     session.add(task)
     session.commit()
     print "id: %d" % task.id
+
+
+delete = object()
 
 
 def cmd_edit(args):
@@ -96,14 +102,16 @@ def cmd_edit(args):
     if not task:
         raise yap.exceptions.TaskNotFoundError(args.id)
 
-    if args.title is not None:
-        task.title = None if args.title == '' else ' '.join(args.title)
-    if args.due is not None:
-        task.due_date = None if args.due == '' else args.due
-    if args.wait is not None:
-        task.wait_date = None if args.wait == '' else args.wait
-    if args.context is not None:
-        task.context = None if args.context == '' else args.context
+    if args.title:
+        task.title = None if args.title == delete else ' '.join(args.title)
+    if args.due:
+        task.due_date = None if args.due == delete else args.due
+    if args.wait:
+        task.wait_date = None if args.wait == delete else args.wait
+    if args.context:
+        task.context = None if args.context == delete else args.context
+    if args.recur:
+        task.recur = None if args.recur == delete else args.recur
 
     session.commit()
 
@@ -202,10 +210,25 @@ def cmd_daemon(args):  # TODO
     pass
 
 
-def strdate(s):
-    if s == '':
-        return ''
-    return datetime.strptime(s, yap.DATE_FORMAT)
+def delete_with_empty_string(f):
+    @wraps(f)
+    def inner(s):
+        if s == '':
+            return delete
+        return f(s)
+    return inner
+
+
+@delete_with_empty_string
+def date_or_datetime(s):
+    if 'T' in s:
+        return isodate.parse_datetime(s)
+    return datetime.combine(isodate.parse_date(s), time.min)
+
+
+@delete_with_empty_string
+def duration(s):
+    return isodate.parse_duration(s)
 
 
 def parse_args():
@@ -218,10 +241,11 @@ def parse_args():
     parser_add = subparsers.add_parser('add')
     parser_add.set_defaults(func=cmd_add)
     parser_add.add_argument('title', nargs='+')
-    parser_add.add_argument('-d', '--due', type=strdate,
+    parser_add.add_argument('-d', '--due', type=date_or_datetime,
                             help="due date")
-    parser_add.add_argument('-w', '--wait', type=strdate,
+    parser_add.add_argument('-w', '--wait', type=date_or_datetime,
                             help="do not show before wait date")
+    parser_add.add_argument('-r', '--recur', type=duration)
     parser_add.add_argument('-c', '--context')
 
     parser_list = subparsers.add_parser('list')
@@ -240,8 +264,9 @@ def parse_args():
     parser_edit.set_defaults(func=cmd_edit)
     parser_edit.add_argument('id', type=int)
     parser_edit.add_argument('-t', '--title', nargs='+')
-    parser_edit.add_argument('-d', '--due', type=strdate)
-    parser_edit.add_argument('-w', '--wait', type=strdate)
+    parser_edit.add_argument('-d', '--due', type=date_or_datetime)
+    parser_edit.add_argument('-w', '--wait', type=date_or_datetime)
+    parser_edit.add_argument('-r', '--recur', type=duration)
     parser_edit.add_argument('-c', '--context')
 
     parser_append = subparsers.add_parser('append')

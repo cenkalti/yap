@@ -28,6 +28,7 @@ setup(
     install_requires=[
         'SQLAlchemy>=1.0,<2',
         'tabulate>=0.7,<2',
+        'isodate>=0.5,<2',
     ],
     description='Command line todo app',
     zip_safe=True,

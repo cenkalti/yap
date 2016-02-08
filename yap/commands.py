@@ -234,7 +234,7 @@ def delete_with_empty_string(f):
 
 
 def date_time_or_datetime(s, default_day, default_time):
-    d = parse_day_month_name(s)
+    d = parse_day_name(s)
     if d:
         return datetime.combine(d, default_time)
     if s == 'now':
@@ -259,29 +259,16 @@ def date_time_or_datetime(s, default_day, default_time):
         raise argparse.ArgumentTypeError(msg)
 
 
-def parse_day_month_name(s):
-    s = s.lower()
-    today = date.today()
-
+def parse_day_name(s):
     days = ['monday', 'tuesday', 'wednesday', 'thursday',
             'friday', 'saturday', 'sunday']
     try:
-        i = days.index(s)
+        i = days.index(s.lower())
     except ValueError:
         pass
     else:
-        delta_days = (i - today.weekday()) % 7
+        delta_days = (i - date.today().weekday()) % 7
         return date.today() + timedelta(days=delta_days)
-
-    months = ['january', 'february', 'march', 'april', 'may', 'june',
-              'july', 'august', 'september', 'october', 'november', 'december']
-    try:
-        i = months.index(s)
-    except ValueError:
-        pass
-    else:
-        delta_months = (i+1 - today.month) % 12
-        return date.today() + isodate.Duration(months=delta_months)
 
 
 @delete_with_empty_string

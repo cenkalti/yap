@@ -11,7 +11,6 @@ Usage:
 
 # TODO move up 3 subcommand (order column)
 # TODO recurring tasks (https://taskwarrior.org/docs/recurrence.html) (https://taskwarrior.org/docs/durations.html)
-# TODO human dates (https://taskwarrior.org/docs/dates.html) (https://taskwarrior.org/docs/named_dates.html)
 # TODO daemon subcommand
 # TODO notifications
 # TODO projects

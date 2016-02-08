@@ -9,8 +9,8 @@ Usage:
 
 """
 
+# TODO strict recurring tasks
 # TODO move up 3 subcommand (order column)
-# TODO recurring tasks (https://taskwarrior.org/docs/recurrence.html) (https://taskwarrior.org/docs/durations.html)
 # TODO daemon subcommand
 # TODO notifications
 # TODO projects

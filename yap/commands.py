@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import errno
+import operator
 import argparse
 import subprocess
 from datetime import datetime, date, time, timedelta
@@ -244,11 +245,23 @@ def date_time_or_datetime(s, default_day, default_time):
     if s == 'tomorrow':
         return datetime.combine(date.today() + timedelta(days=1), default_time)
     try:
-        if s.startswith('P'):
-            return datetime.now() + isodate.parse_duration(s)
-        if s.startswith('-P'):
-            return datetime.now() - isodate.parse_duration(s)
-        if 'T' in s:
+        if s.startswith('-'):
+            op = operator.sub
+            s = s[1:]
+        else:
+            op = operator.add
+        if s.startswith('P'):  # ISO 8601 duration
+            td = isodate.parse_duration(s)
+            try:
+                td = td.tdelta
+            except AttributeError:
+                pass
+            if td.seconds == 0:  # resolution is day
+                now = datetime.combine(datetime.today(), default_time)
+            else:
+                now = datetime.now()
+            return op(now, isodate.parse_duration(s))
+        if 'T' in s:  # ISO 8601 combined date and time
             return isodate.parse_datetime(s)
         try:
             return datetime.combine(default_day, isodate.parse_time(s))

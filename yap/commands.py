@@ -144,9 +144,10 @@ def cmd_done(args):
     tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
     for task in tasks:
         if task.recurring:
-            now = datetime.now()
             if task.due_date.time() == time.max:
-                now = datetime.combine(now.date(), time.max)
+                now = datetime.combine(date.today(), time.max)
+            else:
+                now = datetime.now()
             new_due_date = now + task.recur
             delta = new_due_date - task.due_date
             task.due_date = new_due_date

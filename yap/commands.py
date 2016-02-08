@@ -143,7 +143,7 @@ def cmd_done(args):
     tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
     for task in tasks:
         if task.recurring:
-            now = datetime.utcnow()
+            now = datetime.now()
             if task.due_date.time() == time.max:
                 now = datetime.combine(now.date(), time.max)
             new_due_date = now + task.recur
@@ -154,7 +154,7 @@ def cmd_done(args):
         else:
             # Make done task's id negative so new tasks can reuse positive ids.
             task.id = yap.db.get_next_negative_id(session, Task)
-            task.done_at = datetime.utcnow()
+            task.done_at = datetime.now()
     session.commit()
 
 
@@ -234,7 +234,15 @@ def delete_with_empty_string(f):
 
 
 def date_time_or_datetime(s, default_day, default_time):
+    if s == 'now':
+        return datetime.now()
+    if s == 'today':
+        return datetime.combine(date.today(), default_time)
     try:
+        if s.startswith('P'):
+            return datetime.now() + isodate.parse_duration(s)
+        if s.startswith('-P'):
+            return datetime.now() - isodate.parse_duration(s)
         if 'T' in s:
             return isodate.parse_datetime(s)
         try:

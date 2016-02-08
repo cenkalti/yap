@@ -4,7 +4,7 @@ import json
 import errno
 import argparse
 import subprocess
-from datetime import datetime, time
+from datetime import datetime, date, time
 from functools import wraps
 
 import isodate
@@ -233,11 +233,27 @@ def delete_with_empty_string(f):
     return inner
 
 
+def date_time_or_datetime(s, default_day, default_time):
+    try:
+        if 'T' in s:
+            return isodate.parse_datetime(s)
+        try:
+            return datetime.combine(default_day, isodate.parse_time(s))
+        except ValueError:
+            return datetime.combine(isodate.parse_date(s), default_time)
+    except ValueError:
+        msg = "%r is not an ISO 8601 date, time or datetime" % s
+        raise argparse.ArgumentTypeError(msg)
+
+
 @delete_with_empty_string
-def date_or_datetime(s):
-    if 'T' in s:
-        return isodate.parse_datetime(s)
-    return datetime.combine(isodate.parse_date(s), time.max)
+def _due_date(s):
+    return date_time_or_datetime(s, date.today(), time.max)
+
+
+@delete_with_empty_string
+def _wait_date(s):
+    return date_time_or_datetime(s, date.today(), time.min)
 
 
 @delete_with_empty_string
@@ -255,9 +271,9 @@ def parse_args():
     parser_add = subparsers.add_parser('add')
     parser_add.set_defaults(func=cmd_add)
     parser_add.add_argument('title', nargs='+')
-    parser_add.add_argument('-d', '--due', type=date_or_datetime,
+    parser_add.add_argument('-d', '--due', type=_due_date,
                             help="due date")
-    parser_add.add_argument('-w', '--wait', type=date_or_datetime,
+    parser_add.add_argument('-w', '--wait', type=_wait_date,
                             help="do not show before wait date")
     parser_add.add_argument('-r', '--recur', type=duration)
     parser_add.add_argument('-c', '--context')
@@ -278,8 +294,8 @@ def parse_args():
     parser_edit.set_defaults(func=cmd_edit)
     parser_edit.add_argument('id', type=int)
     parser_edit.add_argument('-t', '--title', nargs='+')
-    parser_edit.add_argument('-d', '--due', type=date_or_datetime)
-    parser_edit.add_argument('-w', '--wait', type=date_or_datetime)
+    parser_edit.add_argument('-d', '--due', type=_due_date)
+    parser_edit.add_argument('-w', '--wait', type=_wait_date)
     parser_edit.add_argument('-r', '--recur', type=duration)
     parser_edit.add_argument('-c', '--context')
 

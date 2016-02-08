@@ -4,7 +4,7 @@ import json
 import errno
 import argparse
 import subprocess
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 from functools import wraps
 
 import isodate
@@ -234,10 +234,15 @@ def delete_with_empty_string(f):
 
 
 def date_time_or_datetime(s, default_day, default_time):
+    d = parse_day_month_name(s)
+    if d:
+        return datetime.combine(d, default_time)
     if s == 'now':
         return datetime.now()
     if s == 'today':
         return datetime.combine(date.today(), default_time)
+    if s == 'tomorrow':
+        return datetime.combine(date.today() + timedelta(days=1), default_time)
     try:
         if s.startswith('P'):
             return datetime.now() + isodate.parse_duration(s)
@@ -252,6 +257,31 @@ def date_time_or_datetime(s, default_day, default_time):
     except ValueError:
         msg = "%r is not an ISO 8601 date, time or datetime" % s
         raise argparse.ArgumentTypeError(msg)
+
+
+def parse_day_month_name(s):
+    s = s.lower()
+    today = date.today()
+
+    days = ['monday', 'tuesday', 'wednesday', 'thursday',
+            'friday', 'saturday', 'sunday']
+    try:
+        i = days.index(s)
+    except ValueError:
+        pass
+    else:
+        delta_days = (i - today.weekday()) % 7
+        return date.today() + timedelta(days=delta_days)
+
+    months = ['january', 'february', 'march', 'april', 'may', 'june',
+              'july', 'august', 'september', 'october', 'november', 'december']
+    try:
+        i = months.index(s)
+    except ValueError:
+        pass
+    else:
+        delta_months = (i+1 - today.month) % 12
+        return date.today() + isodate.Duration(months=delta_months)
 
 
 @delete_with_empty_string

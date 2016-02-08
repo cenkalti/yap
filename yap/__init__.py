@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO strict recurring tasks
 # TODO move up 3 subcommand (order column)
 # TODO daemon subcommand
 # TODO notifications

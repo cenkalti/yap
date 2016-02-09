@@ -267,10 +267,11 @@ def date_time_or_datetime(s, default_day, default_time):
             return op(now, isodate.parse_duration(s))
         if 'T' in s:  # ISO 8601 combined date and time
             return isodate.parse_datetime(s)
-        try:
-            return datetime.combine(default_day, isodate.parse_time(s))
-        except ValueError:
+        if '-' in s:
             return datetime.combine(isodate.parse_date(s), default_time)
+        if ':' in s:
+            return datetime.combine(default_day, isodate.parse_time(s))
+        raise ValueError
     except ValueError:
         msg = "%r is not an ISO 8601 date, time or datetime" % s
         raise argparse.ArgumentTypeError(msg)

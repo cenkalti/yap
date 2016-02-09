@@ -192,6 +192,20 @@ def cmd_delete(args):
     session.commit()
 
 
+def cmd_wait(args):
+    session = Session()
+    session.query(Task).filter(Task.id.in_(args.id))\
+        .update({Task.wait_date: args.wait_date}, synchronize_session=False)
+    session.commit()
+
+
+def cmd_postpone(args):
+    session = Session()
+    session.query(Task).filter(Task.id.in_(args.id))\
+        .update({Task.due_date: args.due_date}, synchronize_session=False)
+    session.commit()
+
+
 def cmd_export(args):
     session = Session()
     d = {'task': [task.to_dict() for task in session.query(Task).all()]}
@@ -391,6 +405,16 @@ def parse_args():
     parser_delete = subparsers.add_parser('delete')
     parser_delete.set_defaults(func=cmd_delete)
     parser_delete.add_argument('id', type=int, nargs='+')
+
+    parser_wait = subparsers.add_parser('wait')
+    parser_wait.set_defaults(func=cmd_wait)
+    parser_wait.add_argument('wait_date', type=_wait_date)
+    parser_wait.add_argument('id', type=int, nargs='+')
+
+    parser_postpone = subparsers.add_parser('postpone')
+    parser_postpone.set_defaults(func=cmd_postpone)
+    parser_postpone.add_argument('due_date', type=_due_date)
+    parser_postpone.add_argument('id', type=int, nargs='+')
 
     parser_export = subparsers.add_parser('export')
     parser_export.set_defaults(func=cmd_export)

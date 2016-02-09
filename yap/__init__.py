@@ -13,6 +13,7 @@ Usage:
 # TODO daemon subcommand
 # TODO notifications
 # TODO note command with $EDITOR
+# TODO implement undo command
 # TODO auto-complete commands
 # TODO do not allow --recur when no due date
 # TODO do not allow --on when --due or --wait set

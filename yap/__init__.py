@@ -9,16 +9,16 @@ Usage:
 
 """
 
-# TODO do not allow --recur when no due date
-# TODO do not allow --on when --due or --wait set
 # TODO move up 3 subcommand (order column)
 # TODO daemon subcommand
 # TODO notifications
+# TODO note command with $EDITOR
+# TODO auto-complete commands
+# TODO do not allow --recur when no due date
+# TODO do not allow --on when --due or --wait set
 # TODO projects
 # TODO search
 # TODO filters (https://taskwarrior.org/docs/syntax.html) (https://taskwarrior.org/docs/filter.html)
-# TODO auto-complete commands
-# TODO note command with $EDITOR
 
 import os
 

@@ -46,6 +46,7 @@ def cmd_list(args, limit=None):
         attrs.append('str_done_at')
         query = query\
             .filter(Task.done == True)\
+            .filter(Task.archived != True)\
             .order_by(Task.done_at.desc())\
             .limit(yap.LIST_DONE_MAX)
     elif args.waiting:
@@ -53,12 +54,14 @@ def cmd_list(args, limit=None):
         attrs.append('str_wait_date')
         query = query\
             .filter(Task.waiting == True)\
+            .filter(Task.archived != True)\
             .order_by(Task.wait_date)
-    elif args.removed:
-        query = query.filter(Task.deleted == True)
+    elif args.archived:
+        query = query.filter(Task.archived == True)
     else:
         query = query\
             .filter(Task.done != True, Task.waiting != True)\
+            .filter(Task.archived != True)\
             .order_by(  # Show tasks with order date first
                 case([(Task.due_date == None, 0)], 1),
                 Task.due_date,
@@ -376,8 +379,8 @@ def parse_args():
                                    help="show waiting tasks")
     parser_list_group.add_argument('-c', '--context',
                                    help="show items in context")
-    parser_list_group.add_argument('-r', '--removed', action='store_true',
-                                   help="show removed items")
+    parser_list_group.add_argument('-a', '--archived', action='store_true',
+                                   help="show archived items")
 
     parser_next = subparsers.add_parser('next')
     parser_next.set_defaults(func=cmd_next)

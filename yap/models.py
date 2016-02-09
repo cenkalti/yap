@@ -67,11 +67,11 @@ class Task(Base):
         return self.done_at != None
 
     @hybrid_property
-    def deleted(self):
+    def archived(self):
         return self.id < 0 and self.done_at == None
 
-    @deleted.expression
-    def deleted(self):
+    @archived.expression
+    def archived(self):
         return and_(self.id < 0, self.done_at == None)
 
     @hybrid_property

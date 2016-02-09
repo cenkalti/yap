@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO add --date flag to add and edit commands
 # TODO add --context flag to list command
 # TODO implement postpone command
 # TODO do not allow --recur when no due date

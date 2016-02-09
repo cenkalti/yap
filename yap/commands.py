@@ -94,8 +94,12 @@ def cmd_add(args):
     task = Task()
     task.id = yap.db.get_smallest_empty_id(session, Task)
     task.title = ' '.join(args.title)
-    task.due_date = args.due
-    task.wait_date = args.wait
+    if args.on:
+        task.due_date = datetime.combine(args.on, time.max)
+        task.wait_date = datetime.combine(args.on, time.min)
+    else:
+        task.due_date = args.due
+        task.wait_date = args.wait
     task.context = args.context or get_context()
     task.recur = args.recur
     session.add(task)
@@ -111,6 +115,13 @@ def cmd_edit(args):
 
     if args.title:
         task.title = None if args.title == delete else ' '.join(args.title)
+    if args.on:
+        if args.on == delete:
+            task.due_date = None
+            task.wait_date = None
+        else:
+            task.due_date = datetime.combine(args.on, time.max)
+            task.wait_date = datetime.combine(args.on, time.min)
     if args.due:
         task.due_date = None if args.due == delete else args.due
     if args.wait:
@@ -303,6 +314,11 @@ def _wait_date(s):
 
 
 @delete_with_empty_string
+def _on_date(s):
+    return date_time_or_datetime(s, date.today(), time.min).date()
+
+
+@delete_with_empty_string
 def duration(s):
     return isodate.parse_duration(s)
 
@@ -321,6 +337,8 @@ def parse_args():
                             help="due date")
     parser_add.add_argument('-w', '--wait', type=_wait_date,
                             help="do not show before wait date")
+    parser_add.add_argument('-o', '--on', type=_on_date,
+                            help="set due date and wait date to same day")
     parser_add.add_argument('-r', '--recur', type=duration)
     parser_add.add_argument('-c', '--context')
 
@@ -342,6 +360,7 @@ def parse_args():
     parser_edit.add_argument('-t', '--title', nargs='+')
     parser_edit.add_argument('-d', '--due', type=_due_date)
     parser_edit.add_argument('-w', '--wait', type=_wait_date)
+    parser_edit.add_argument('-o', '--on', type=_on_date)
     parser_edit.add_argument('-r', '--recur', type=duration)
     parser_edit.add_argument('-c', '--context')
 

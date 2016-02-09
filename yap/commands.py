@@ -61,8 +61,13 @@ def cmd_list(args, limit=None):
                 case([(Task.due_date == None, 0)], 1),
                 Task.due_date)
 
-    headers.extend(['Due date', 'Title'])
-    attrs.extend(['str_due_date', 'title'])
+    headers.append('Due date')
+    attrs.append('str_due_date')
+    if not context:
+        headers.append('Context')
+        attrs.append('context')
+    headers.append('Title')
+    attrs.append('title')
 
     if limit:
         query = query.limit(limit)
@@ -96,9 +101,6 @@ def cmd_add(args):
     session.add(task)
     session.commit()
     print "id: %d" % task.id
-
-
-delete = object()
 
 
 def cmd_edit(args):
@@ -236,6 +238,7 @@ def delete_with_empty_string(f):
             return delete
         return f(s)
     return inner
+delete = object()
 
 
 def date_time_or_datetime(s, default_day, default_time):

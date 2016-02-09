@@ -70,7 +70,7 @@ def cmd_list(args, limit=None):
     tasks = query.all()
     table = [[getattr(task, attr) for attr in attrs] for task in tasks]
     session.close()
-    print tabulate(table, headers=headers)
+    print tabulate(table, headers=headers, tablefmt='plain')
 
 
 def cmd_show(args):

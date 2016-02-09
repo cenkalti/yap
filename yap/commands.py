@@ -59,7 +59,8 @@ def cmd_list(args, limit=None):
             .filter(Task.done != True, Task.waiting != True)\
             .order_by(  # Show tasks with order date first
                 case([(Task.due_date == None, 0)], 1),
-                Task.due_date)
+                Task.due_date,
+                Task.created_at)
 
     headers.append('Due date')
     attrs.append('str_due_date')

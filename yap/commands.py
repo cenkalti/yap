@@ -54,6 +54,8 @@ def cmd_list(args, limit=None):
         query = query\
             .filter(Task.waiting == True)\
             .order_by(Task.wait_date)
+    elif args.removed:
+        query = query.filter(Task.deleted == True)
     else:
         query = query\
             .filter(Task.done != True, Task.waiting != True)\
@@ -190,6 +192,14 @@ def cmd_delete(args):
     session = Session()
     session.query(Task).filter(Task.id.in_(args.id))\
         .delete(synchronize_session=False)
+    session.commit()
+
+
+def cmd_archive(args):
+    session = Session()
+    session.query(Task).filter(Task.id.in_(args.id))\
+        .update({Task.id: yap.db.get_next_negative_id(session, Task)},
+                synchronize_session=False)
     session.commit()
 
 
@@ -366,6 +376,8 @@ def parse_args():
                                    help="show waiting tasks")
     parser_list_group.add_argument('-c', '--context',
                                    help="show items in context")
+    parser_list_group.add_argument('-r', '--removed', action='store_true',
+                                   help="show removed items")
 
     parser_next = subparsers.add_parser('next')
     parser_next.set_defaults(func=cmd_next)
@@ -406,6 +418,10 @@ def parse_args():
     parser_delete = subparsers.add_parser('delete')
     parser_delete.set_defaults(func=cmd_delete)
     parser_delete.add_argument('id', type=int, nargs='+')
+
+    parser_archive = subparsers.add_parser('archive')
+    parser_archive.set_defaults(func=cmd_archive)
+    parser_archive.add_argument('id', type=int, nargs='+')
 
     parser_wait = subparsers.add_parser('wait')
     parser_wait.set_defaults(func=cmd_wait)

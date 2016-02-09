@@ -9,7 +9,6 @@ Usage:
 
 """
 
-# TODO implement archive command
 # TODO do not allow --recur when no due date
 # TODO do not allow --on when --due or --wait set
 # TODO move up 3 subcommand (order column)

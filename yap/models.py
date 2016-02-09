@@ -67,6 +67,14 @@ class Task(Base):
         return self.done_at != None
 
     @hybrid_property
+    def deleted(self):
+        return self.id < 0 and self.done_at == None
+
+    @deleted.expression
+    def deleted(self):
+        return and_(self.id < 0, self.done_at == None)
+
+    @hybrid_property
     def recurring(self):
         return self.recur != None
 
@@ -104,11 +112,13 @@ class Task(Base):
 
     @property
     def str_done_at(self):
-        return str_datetime(self.done_at)
+        if self.done_at:
+            return str_datetime(self.done_at)
 
     @property
     def str_wait_date(self):
-        return str_datetime(self.wait_date)
+        if self.wait_date:
+            return str_datetime(self.wait_date)
 
 
 def str_datetime(dt):

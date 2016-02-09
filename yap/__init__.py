@@ -15,6 +15,7 @@ Usage:
 # TODO note command with $EDITOR
 # TODO implement undo command
 # TODO auto-complete commands
+# TODO refactor list command
 # TODO do not allow --recur when no due date
 # TODO do not allow --on when --due or --wait set
 # TODO projects

@@ -37,7 +37,7 @@ def cmd_list(args, limit=None):
     headers = ['ID']
     attrs = ['id']
 
-    context = get_context()
+    context = args.context or get_context()
     if context:
         query = query.filter(Task.context == context)
 
@@ -349,6 +349,8 @@ def parse_args():
                                    help="show done tasks")
     parser_list_group.add_argument('-w', '--waiting', action='store_true',
                                    help="show waiting tasks")
+    parser_list_group.add_argument('-c', '--context',
+                                   help="show items in context")
 
     parser_next = subparsers.add_parser('next')
     parser_next.set_defaults(func=cmd_next)

@@ -10,6 +10,7 @@ Usage:
 """
 
 # TODO implement postpone command
+# TODO do not allow --recur when no due date
 # TODO move up 3 subcommand (order column)
 # TODO daemon subcommand
 # TODO notifications

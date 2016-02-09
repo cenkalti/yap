@@ -144,19 +144,22 @@ def cmd_done(args):
     tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
     for task in tasks:
         if task.recurring:
-            if task.due_date.time() == time.max:
+            new_task = Task.from_dict(task.to_dict())
+            new_task.id = yap.db.get_smallest_empty_id(session, Task)
+            new_task.created_at = datetime.now()
+            if new_task.due_date.time() == time.max:
                 now = datetime.combine(date.today(), time.max)
             else:
                 now = datetime.now()
-            new_due_date = now + task.recur
-            delta = new_due_date - task.due_date
-            task.due_date = new_due_date
-            if task.wait_date:
-                task.wait_date += delta
-        else:
-            # Make done task's id negative so new tasks can reuse positive ids.
-            task.id = yap.db.get_next_negative_id(session, Task)
-            task.done_at = datetime.now()
+            new_due_date = now + new_task.recur
+            delta = new_due_date - new_task.due_date
+            new_task.due_date = new_due_date
+            if new_task.wait_date:
+                new_task.wait_date += delta
+            session.add(new_task)
+        # Make done task's id negative so new tasks can reuse positive ids.
+        task.id = yap.db.get_next_negative_id(session, Task)
+        task.done_at = datetime.now()
     session.commit()
 
 

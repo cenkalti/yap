@@ -54,7 +54,7 @@ class Task(Base):
     title = Column(String, nullable=False)
     due_date = Column(DateTime)
     wait_date = Column(DateTime)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=datetime.now)
     done_at = Column(DateTime)
     context = Column(String)
     recur = Column(Duration)
@@ -74,23 +74,23 @@ class Task(Base):
     def overdue(self):
         if self.due_date is None:
             return False
-        return self.due_date < datetime.utcnow()
+        return self.due_date < datetime.now()
 
     @property
     def remaining(self):
         if self.due_date is None:
             return None
-        return self.due_date - datetime.utcnow()
+        return self.due_date - datetime.now()
 
     @hybrid_property
     def waiting(self):
         if self.wait_date is None:
             return False
-        return self.wait_date > datetime.utcnow()
+        return self.wait_date > datetime.now()
 
     @waiting.expression
     def waiting(cls):
-        return and_(cls.wait_date != None, cls.wait_date > datetime.utcnow())
+        return and_(cls.wait_date != None, cls.wait_date > datetime.now())
 
     @property
     def str_due_date(self):

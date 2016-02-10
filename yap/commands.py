@@ -27,6 +27,8 @@ def cmd_version(_):
 def cmd_next(args):
     args.done = None
     args.waiting = None
+    args.archived = None
+    args.context = None
     cmd_list(args, limit=args.n)
 
 

@@ -34,9 +34,9 @@ def list_(args, limit=None):
     headers = ['ID']
     attrs = ['id']
 
-    context = args.context or _get_context()
-    if context:
-        query = query.filter(Task.context == context)
+    ctx = args.context or _get_context()
+    if ctx:
+        query = query.filter(Task.context == ctx)
 
     if args.done:
         headers.append('Done at')
@@ -66,7 +66,7 @@ def list_(args, limit=None):
 
     headers.append('Due date')
     attrs.append('str_due_date')
-    if not context:
+    if not ctx:
         headers.append('Context')
         attrs.append('context')
     headers.append('Title')

@@ -124,7 +124,6 @@ def parse_args():
 
     parser_next = subparsers.add_parser('next')
     parser_next.set_defaults(func=yap.commands.next_)
-    parser_next.add_argument('n', type=int, default=1, nargs='?')
 
     parser_edit = subparsers.add_parser('edit')
     parser_edit.set_defaults(func=yap.commands.edit)

@@ -15,26 +15,26 @@ import yap.json_util
 from yap.models import Task, Session
 
 
-def cmd_version(_):
+def version(_):
     print yap.__version__
 
 
-def cmd_next(args):
+def next_(args):
     args.done = None
     args.waiting = None
     args.archived = None
     args.context = None
-    cmd_list(args, limit=args.n)
+    list_(args, limit=args.n)
 
 
-def cmd_list(args, limit=None):
+def list_(args, limit=None):
     session = Session()
     query = session.query(Task)
 
     headers = ['ID']
     attrs = ['id']
 
-    context = args.context or get_context()
+    context = args.context or _get_context()
     if context:
         query = query.filter(Task.context == context)
 
@@ -81,7 +81,7 @@ def cmd_list(args, limit=None):
     print tabulate(table, headers=headers, tablefmt='plain')
 
 
-def cmd_show(args):
+def show(args):
     session = Session()
     task = session.query(Task).get(args.id)
     if not task:
@@ -92,7 +92,7 @@ def cmd_show(args):
     session.close()
 
 
-def cmd_add(args):
+def add(args):
     session = Session()
     task = Task()
     task.id = yap.db.get_smallest_empty_id(session, Task)
@@ -103,7 +103,7 @@ def cmd_add(args):
     else:
         task.due_date = args.due
         task.wait_date = args.wait
-    task.context = args.context or get_context()
+    task.context = args.context or _get_context()
     task.recur = args.recur
     if task.recur:
         task.shift = args.shift
@@ -112,37 +112,37 @@ def cmd_add(args):
     print "id: %d" % task.id
 
 
-def cmd_edit(args):
+def edit(args):
     session = Session()
     task = session.query(Task).get(args.id)
     if not task:
         raise yap.exceptions.TaskNotFoundError(args.id)
 
     if args.title:
-        task.title = None if args.title == delete else ' '.join(args.title)
+        task.title = None if args.title == delete_option else ' '.join(args.title)
     if args.on:
-        if args.on == delete:
+        if args.on == delete_option:
             task.due_date = None
             task.wait_date = None
         else:
             task.due_date = datetime.combine(args.on, time.max)
             task.wait_date = datetime.combine(args.on, time.min)
     if args.due:
-        task.due_date = None if args.due == delete else args.due
+        task.due_date = None if args.due == delete_option else args.due
     if args.wait:
-        task.wait_date = None if args.wait == delete else args.wait
+        task.wait_date = None if args.wait == delete_option else args.wait
     if args.context:
-        task.context = None if args.context == delete else args.context
+        task.context = None if args.context == delete_option else args.context
     if args.recur:
-        task.recur = None if args.recur == delete else args.recur
+        task.recur = None if args.recur == delete_option else args.recur
     if args.shift is not None:
         task.shift = args.shift
 
     session.commit()
-delete = object()
+delete_option = object()
 
 
-def cmd_append(args):
+def append(args):
     session = Session()
     task = session.query(Task).get(args.id)
     if not task:
@@ -151,7 +151,7 @@ def cmd_append(args):
     session.commit()
 
 
-def cmd_prepend(args):
+def prepend(args):
     session = Session()
     task = session.query(Task).get(args.id)
     if not task:
@@ -160,7 +160,7 @@ def cmd_prepend(args):
     session.commit()
 
 
-def cmd_done(args):
+def done(args):
     session = Session()
     tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
     for task in tasks:
@@ -187,7 +187,7 @@ def cmd_done(args):
     session.commit()
 
 
-def cmd_undone(args):
+def undone(args):
     session = Session()
     tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
     for task in tasks:
@@ -196,14 +196,14 @@ def cmd_undone(args):
     session.commit()
 
 
-def cmd_delete(args):
+def delete(args):
     session = Session()
     session.query(Task).filter(Task.id.in_(args.id))\
         .delete(synchronize_session=False)
     session.commit()
 
 
-def cmd_archive(args):
+def archive(args):
     session = Session()
     session.query(Task).filter(Task.id.in_(args.id))\
         .update({Task.id: yap.db.get_next_negative_id(session, Task)},
@@ -211,21 +211,21 @@ def cmd_archive(args):
     session.commit()
 
 
-def cmd_wait(args):
+def wait(args):
     session = Session()
     session.query(Task).filter(Task.id.in_(args.id))\
         .update({Task.wait_date: args.wait_date}, synchronize_session=False)
     session.commit()
 
 
-def cmd_postpone(args):
+def postpone(args):
     session = Session()
     session.query(Task).filter(Task.id.in_(args.id))\
         .update({Task.due_date: args.due_date}, synchronize_session=False)
     session.commit()
 
 
-def cmd_export(args):
+def export(args):
     session = Session()
     d = {'task': [task.to_dict() for task in session.query(Task).all()]}
     session.close()
@@ -235,7 +235,7 @@ def cmd_export(args):
     args.outfile.close()
 
 
-def cmd_import(args):
+def import_(args):
     has_error = False
     d = json.load(args.infile, object_hook=yap.json_util.datetime_decoder)
     for task in d['task']:
@@ -252,17 +252,17 @@ def cmd_import(args):
         raise yap.exceptions.TaskImportError
 
 
-def cmd_context(args):
+def context(args):
     if args.name:
         with open(yap.CONTEXT_PATH, 'w') as f:
             f.write(args.name)
     elif args.clear:
         os.unlink(yap.CONTEXT_PATH)
     else:
-        print get_context()
+        print _get_context()
 
 
-def get_context():
+def _get_context():
     try:
         with open(yap.CONTEXT_PATH, 'r') as f:
             return f.read()
@@ -271,14 +271,14 @@ def get_context():
             raise
 
 
-def cmd_daemon(args):  # TODO
+def daemon(args):  # TODO
     pass
 
 
-def run_script(script):  # TODO
+def _run_script(script):  # TODO
     return subprocess.check_output(
             ['osascript', '-'], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-def display_notification(message, title):  # TODO
+def _display_notification(message, title):  # TODO
     pass

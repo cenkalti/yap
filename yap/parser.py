@@ -14,7 +14,7 @@ def delete_with_empty_string(f):
     @wraps(f)
     def inner(s):
         if s == '':
-            return yap.commands.delete
+            return yap.commands.delete_option
         return f(s)
     return inner
 
@@ -95,10 +95,10 @@ def parse_args():
     subparsers = parser.add_subparsers()
 
     parser_version = subparsers.add_parser('version')
-    parser_version.set_defaults(func=yap.commands.cmd_version)
+    parser_version.set_defaults(func=yap.commands.version)
 
     parser_add = subparsers.add_parser('add')
-    parser_add.set_defaults(func=yap.commands.cmd_add)
+    parser_add.set_defaults(func=yap.commands.add)
     parser_add.add_argument('title', nargs='+')
     parser_add.add_argument('-d', '--due', type=_due_date,
                             help="due date")
@@ -111,7 +111,7 @@ def parse_args():
     parser_add.add_argument('-c', '--context')
 
     parser_list = subparsers.add_parser('list')
-    parser_list.set_defaults(func=yap.commands.cmd_list)
+    parser_list.set_defaults(func=yap.commands.list_)
     parser_list_group = parser_list.add_mutually_exclusive_group()
     parser_list_group.add_argument('-d', '--done', action='store_true',
                                    help="show done tasks")
@@ -123,11 +123,11 @@ def parse_args():
                                    help="show archived items")
 
     parser_next = subparsers.add_parser('next')
-    parser_next.set_defaults(func=yap.commands.cmd_next)
+    parser_next.set_defaults(func=yap.commands.next_)
     parser_next.add_argument('n', type=int, default=1, nargs='?')
 
     parser_edit = subparsers.add_parser('edit')
-    parser_edit.set_defaults(func=yap.commands.cmd_edit)
+    parser_edit.set_defaults(func=yap.commands.edit)
     parser_edit.add_argument('id', type=int)
     parser_edit.add_argument('-t', '--title', nargs='+')
     parser_edit.add_argument('-d', '--due', type=_due_date)
@@ -138,62 +138,62 @@ def parse_args():
     parser_edit.add_argument('-c', '--context')
 
     parser_append = subparsers.add_parser('append')
-    parser_append.set_defaults(func=yap.commands.cmd_append)
+    parser_append.set_defaults(func=yap.commands.append)
     parser_append.add_argument('id', type=int)
     parser_append.add_argument('title', nargs='+')
 
     parser_prepend = subparsers.add_parser('prepend')
-    parser_prepend.set_defaults(func=yap.commands.cmd_prepend)
+    parser_prepend.set_defaults(func=yap.commands.prepend)
     parser_prepend.add_argument('id', type=int)
     parser_prepend.add_argument('title', nargs='+')
 
     parser_show = subparsers.add_parser('show')
-    parser_show.set_defaults(func=yap.commands.cmd_show)
+    parser_show.set_defaults(func=yap.commands.show)
     parser_show.add_argument('id', type=int)
 
     parser_done = subparsers.add_parser('done')
-    parser_done.set_defaults(func=yap.commands.cmd_done)
+    parser_done.set_defaults(func=yap.commands.done)
     parser_done.add_argument('id', type=int, nargs='+')
 
     parser_undone = subparsers.add_parser('undone')
-    parser_undone.set_defaults(func=yap.commands.cmd_undone)
+    parser_undone.set_defaults(func=yap.commands.undone)
     parser_undone.add_argument('id', type=int, nargs='+')
 
     parser_delete = subparsers.add_parser('delete')
-    parser_delete.set_defaults(func=yap.commands.cmd_delete)
+    parser_delete.set_defaults(func=yap.commands.delete)
     parser_delete.add_argument('id', type=int, nargs='+')
 
     parser_archive = subparsers.add_parser('archive')
-    parser_archive.set_defaults(func=yap.commands.cmd_archive)
+    parser_archive.set_defaults(func=yap.commands.archive)
     parser_archive.add_argument('id', type=int, nargs='+')
 
     parser_wait = subparsers.add_parser('wait')
-    parser_wait.set_defaults(func=yap.commands.cmd_wait)
+    parser_wait.set_defaults(func=yap.commands.wait)
     parser_wait.add_argument('wait_date', type=_wait_date)
     parser_wait.add_argument('id', type=int, nargs='+')
 
     parser_postpone = subparsers.add_parser('postpone')
-    parser_postpone.set_defaults(func=yap.commands.cmd_postpone)
+    parser_postpone.set_defaults(func=yap.commands.postpone)
     parser_postpone.add_argument('due_date', type=_due_date)
     parser_postpone.add_argument('id', type=int, nargs='+')
 
     parser_export = subparsers.add_parser('export')
-    parser_export.set_defaults(func=yap.commands.cmd_export)
+    parser_export.set_defaults(func=yap.commands.export)
     parser_export.add_argument('outfile', nargs='?',
                                type=argparse.FileType('w'), default=sys.stdout)
 
     parser_import = subparsers.add_parser('import')
-    parser_import.set_defaults(func=yap.commands.cmd_import)
+    parser_import.set_defaults(func=yap.commands.import_)
     parser_import.add_argument('infile', nargs='?',
                                type=argparse.FileType('r'), default=sys.stdin)
 
     parser_context = subparsers.add_parser('context')
-    parser_context.set_defaults(func=yap.commands.cmd_context)
+    parser_context.set_defaults(func=yap.commands.context)
     parser_context.add_argument('name', nargs='?')
     parser_context.add_argument('-c', '--clear', action='store_true')
 
     parser_daemon = subparsers.add_parser('daemon')
-    parser_daemon.set_defaults(func=yap.commands.cmd_daemon)
+    parser_daemon.set_defaults(func=yap.commands.daemon)
 
     # If invoked with no subcommand, run next subcommand
     if len(sys.argv) == 1:

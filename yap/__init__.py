@@ -9,6 +9,7 @@ Usage:
 
 """
 
+# TODO add strict reucurrence
 # TODO move up 3 subcommand (order column)
 # TODO daemon subcommand
 # TODO notifications

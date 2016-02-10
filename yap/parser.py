@@ -107,6 +107,7 @@ def parse_args():
     parser_add.add_argument('-o', '--on', type=_on_date,
                             help="set due date and wait date to same day")
     parser_add.add_argument('-r', '--recur', type=duration)
+    parser_add.add_argument('-s', '--shift', action='store_true')
     parser_add.add_argument('-c', '--context')
 
     parser_list = subparsers.add_parser('list')
@@ -133,6 +134,7 @@ def parse_args():
     parser_edit.add_argument('-w', '--wait', type=_wait_date)
     parser_edit.add_argument('-o', '--on', type=_on_date)
     parser_edit.add_argument('-r', '--recur', type=duration)
+    parser_edit.add_argument('-s', '--shift', type=bool)
     parser_edit.add_argument('-c', '--context')
 
     parser_append = subparsers.add_parser('append')

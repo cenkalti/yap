@@ -2,7 +2,8 @@ import os
 from datetime import datetime, timedelta, time
 
 import isodate
-from sqlalchemy import Column, Integer, String, DateTime, and_, create_engine
+from sqlalchemy import (Column, Integer, String, DateTime, Boolean,
+                        and_, create_engine)
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -58,6 +59,7 @@ class Task(Base):
     done_at = Column(DateTime)
     context = Column(String)
     recur = Column(Duration)
+    shift = Column(Boolean)
 
     def __repr__(self):
         return "<%s id=%i>" % (self.__class__.__name__, self.id)

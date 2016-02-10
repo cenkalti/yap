@@ -105,6 +105,8 @@ def cmd_add(args):
         task.wait_date = args.wait
     task.context = args.context or get_context()
     task.recur = args.recur
+    if task.recur:
+        task.shift = args.shift
     session.add(task)
     session.commit()
     print "id: %d" % task.id
@@ -133,6 +135,8 @@ def cmd_edit(args):
         task.context = None if args.context == delete else args.context
     if args.recur:
         task.recur = None if args.recur == delete else args.recur
+    if args.shift is not None:
+        task.shift = args.shift
 
     session.commit()
 delete = object()
@@ -164,11 +168,14 @@ def cmd_done(args):
             new_task = Task.from_dict(task.to_dict())
             new_task.id = yap.db.get_smallest_empty_id(session, Task)
             new_task.created_at = datetime.now()
-            if new_task.due_date.time() == time.max:
-                now = datetime.combine(date.today(), time.max)
+            if task.shift:
+                if new_task.due_date.time() == time.max:
+                    base = datetime.combine(date.today(), time.max)
+                else:
+                    base = datetime.now()
             else:
-                now = datetime.now()
-            new_due_date = now + new_task.recur
+                base = task.due_date
+            new_due_date = base + new_task.recur
             delta = new_due_date - new_task.due_date
             new_task.due_date = new_due_date
             if new_task.wait_date:

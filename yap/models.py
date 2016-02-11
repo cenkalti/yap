@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, time
 
 import isodate
 from sqlalchemy import (Column, Integer, String, DateTime, Boolean,
-                        and_, create_engine)
+                        and_, create_engine, func)
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -60,6 +60,7 @@ class Task(Base):
     context = Column(String)
     recur = Column(Duration)
     shift = Column(Boolean)
+    order = Column(Integer)
 
     def __repr__(self):
         return "<%s id=%i>" % (self.__class__.__name__, self.id)
@@ -121,6 +122,10 @@ class Task(Base):
     def str_wait_date(self):
         if self.wait_date:
             return str_datetime(self.wait_date)
+
+    @classmethod
+    def find_next_order(cls, session):
+        return (session.query(func.max(cls.order)).scalar() or 0) + 1
 
 
 def str_datetime(dt):

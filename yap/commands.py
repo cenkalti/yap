@@ -114,6 +114,7 @@ def add(args):
     task.recur = args.recur
     if task.recur:
         task.shift = args.shift
+    task.order = Task.find_next_order(session)
     session.add(task)
     session.commit()
     print "id: %d" % task.id

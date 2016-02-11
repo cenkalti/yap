@@ -3,7 +3,6 @@ import json
 import os
 import subprocess
 from datetime import datetime, date, time
-from itertools import islice
 
 from tabulate import tabulate
 from sqlalchemy import case
@@ -79,15 +78,11 @@ def list_(args, only_next=False):
     if only_next:
         overdue_all = [t for t in tasks if t.overdue]
         not_overdue = [t for t in tasks if not t.overdue]
-        tasks = overdue_all + _take_first(not_overdue)
+        tasks = overdue_all + not_overdue[:1]
 
     table = [[getattr(task, attr) for attr in attrs] for task in tasks]
     session.close()
     print tabulate(table, headers=headers, tablefmt='plain')
-
-
-def _take_first(iterable):
-    return list(islice(iterable, 1))
 
 
 def show(args):

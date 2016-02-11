@@ -14,14 +14,14 @@ def setup():
     )
     session = Session()
     operations = [
-        (create_table, session, task),
-        (add_column, session, task, Task.due_date),
-        (add_column, session, task, Task.wait_date),
-        (add_column, session, task, Task.created_at),
-        (add_column, session, task, Task.done_at),
-        (add_column, session, task, Task.context),
-        (add_column, session, task, Task.recur),
-        (add_column, session, task, Task.shift),
+        (_create_table, session, task),
+        (_add_column, session, task, Task.due_date),
+        (_add_column, session, task, Task.wait_date),
+        (_add_column, session, task, Task.created_at),
+        (_add_column, session, task, Task.done_at),
+        (_add_column, session, task, Task.context),
+        (_add_column, session, task, Task.recur),
+        (_add_column, session, task, Task.shift),
     ]
     current_version = session.execute("pragma user_version").fetchone()[0]
     for operation in operations[current_version:]:
@@ -31,13 +31,13 @@ def setup():
         session.commit()
 
 
-def create_table(session, table):
+def _create_table(session, table):
     # Table.create() does commit() implicitly, we do not want this.
     sql = str(CreateTable(table).compile(engine))
     session.execute(sql)
 
 
-def add_column(session, table, column):
+def _add_column(session, table, column):
     # sqlalchemy has no construct for altering tables :(
     table_name = table.description
     column = column.copy()

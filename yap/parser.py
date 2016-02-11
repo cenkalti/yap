@@ -10,7 +10,7 @@ import yap.commands
 import yap.exceptions
 
 
-def delete_with_empty_string(f):
+def _delete_with_empty_string(f):
     @wraps(f)
     def inner(s):
         if s == '':
@@ -20,7 +20,7 @@ def delete_with_empty_string(f):
 
 
 def date_time_or_datetime(s, default_day, default_time):
-    d = parse_day_name(s)
+    d = _parse_day_name(s)
     if d:
         return datetime.combine(d, default_time)
     if s == 'now':
@@ -58,7 +58,7 @@ def date_time_or_datetime(s, default_day, default_time):
         raise argparse.ArgumentTypeError(msg)
 
 
-def parse_day_name(s):
+def _parse_day_name(s):
     days = ['monday', 'tuesday', 'wednesday', 'thursday',
             'friday', 'saturday', 'sunday']
     try:
@@ -70,22 +70,22 @@ def parse_day_name(s):
         return date.today() + timedelta(days=delta_days)
 
 
-@delete_with_empty_string
-def _due_date(s):
+@_delete_with_empty_string
+def due_date(s):
     return date_time_or_datetime(s, date.today(), time.max)
 
 
-@delete_with_empty_string
-def _wait_date(s):
+@_delete_with_empty_string
+def wait_date(s):
     return date_time_or_datetime(s, date.today(), time.min)
 
 
-@delete_with_empty_string
-def _on_date(s):
+@_delete_with_empty_string
+def on_date(s):
     return date_time_or_datetime(s, date.today(), time.min).date()
 
 
-@delete_with_empty_string
+@_delete_with_empty_string
 def duration(s):
     return isodate.parse_duration(s)
 
@@ -100,11 +100,11 @@ def parse_args():
     parser_add = subparsers.add_parser('add')
     parser_add.set_defaults(func=yap.commands.add)
     parser_add.add_argument('title', nargs='+')
-    parser_add.add_argument('-d', '--due', type=_due_date,
+    parser_add.add_argument('-d', '--due', type=due_date,
                             help="due date")
-    parser_add.add_argument('-w', '--wait', type=_wait_date,
+    parser_add.add_argument('-w', '--wait', type=wait_date,
                             help="do not show before wait date")
-    parser_add.add_argument('-o', '--on', type=_on_date,
+    parser_add.add_argument('-o', '--on', type=on_date,
                             help="set due date and wait date to same day")
     parser_add.add_argument('-r', '--recur', type=duration)
     parser_add.add_argument('-s', '--shift', action='store_true')
@@ -129,9 +129,9 @@ def parse_args():
     parser_edit.set_defaults(func=yap.commands.edit)
     parser_edit.add_argument('id', type=int)
     parser_edit.add_argument('-t', '--title', nargs='+')
-    parser_edit.add_argument('-d', '--due', type=_due_date)
-    parser_edit.add_argument('-w', '--wait', type=_wait_date)
-    parser_edit.add_argument('-o', '--on', type=_on_date)
+    parser_edit.add_argument('-d', '--due', type=due_date)
+    parser_edit.add_argument('-w', '--wait', type=wait_date)
+    parser_edit.add_argument('-o', '--on', type=on_date)
     parser_edit.add_argument('-r', '--recur', type=duration)
     parser_edit.add_argument('-s', '--shift', type=bool)
     parser_edit.add_argument('-c', '--context')
@@ -168,12 +168,12 @@ def parse_args():
 
     parser_wait = subparsers.add_parser('wait')
     parser_wait.set_defaults(func=yap.commands.wait)
-    parser_wait.add_argument('wait_date', type=_wait_date)
+    parser_wait.add_argument('wait_date', type=wait_date)
     parser_wait.add_argument('id', type=int, nargs='+')
 
     parser_postpone = subparsers.add_parser('postpone')
     parser_postpone.set_defaults(func=yap.commands.postpone)
-    parser_postpone.add_argument('due_date', type=_due_date)
+    parser_postpone.add_argument('due_date', type=due_date)
     parser_postpone.add_argument('id', type=int, nargs='+')
 
     parser_export = subparsers.add_parser('export')

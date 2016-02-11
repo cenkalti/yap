@@ -55,7 +55,8 @@ def list_(args, only_next=False):
             .filter(Task.archived != True)\
             .order_by(Task.wait_date)
     elif args.archived:
-        query = query.filter(Task.archived == True)
+        query = query.filter(Task.archived == True)\
+            .order_by(Task.created_at.desc())
     else:
         query = query\
             .filter(Task.done != True, Task.waiting != True)\
@@ -63,7 +64,8 @@ def list_(args, only_next=False):
             .order_by(  # Show tasks with order date first
                 case([(Task.due_date == None, 0)], 1),
                 Task.due_date,
-                Task.created_at)
+                case([(Task.order == None, 0)], 1),
+                Task.order.desc())
 
     headers.append('Due date')
     attrs.append('str_due_date')

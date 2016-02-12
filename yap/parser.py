@@ -128,25 +128,19 @@ def parse_args():
     parser_edit = subparsers.add_parser('edit', help="edit task")
     parser_edit.set_defaults(func=yap.commands.edit)
     parser_edit.add_argument('id', type=int)
-    parser_edit.add_argument('-t', '--title', nargs='+')
+    edit_group = parser_edit.add_mutually_exclusive_group()
+    edit_group.add_argument('-t', '--title', nargs='+',
+                            help="replace title")
+    edit_group.add_argument('-a', '--append', nargs='+',
+                            help="append text to title")
+    edit_group.add_argument('-p', '--prepend', nargs='+',
+                            help="prepend text to title")
     parser_edit.add_argument('-d', '--due', type=due_date)
     parser_edit.add_argument('-w', '--wait', type=wait_date)
     parser_edit.add_argument('-o', '--on', type=on_date)
     parser_edit.add_argument('-r', '--recur', type=duration)
     parser_edit.add_argument('-s', '--shift', type=bool)
     parser_edit.add_argument('-c', '--context')
-
-    parser_append = subparsers.add_parser('append',
-                                          help="append text to title")
-    parser_append.set_defaults(func=yap.commands.append)
-    parser_append.add_argument('id', type=int)
-    parser_append.add_argument('title', nargs='+')
-
-    parser_prepend = subparsers.add_parser('prepend',
-                                           help="prepend text to title")
-    parser_prepend.set_defaults(func=yap.commands.prepend)
-    parser_prepend.add_argument('id', type=int)
-    parser_prepend.add_argument('title', nargs='+')
 
     parser_show = subparsers.add_parser('show', help="show task detail")
     parser_show.set_defaults(func=yap.commands.show)

@@ -121,6 +121,10 @@ def edit(args):
 
     if args.title:
         task.title = None if args.title == delete_option else ' '.join(args.title)
+    if args.append:
+        task.title = "%s %s" % (task.title, ' '.join(args.append))
+    if args.prepend:
+        task.title = "%s %s" % (' '.join(args.prepend), task.title)
     if args.on:
         if args.on == delete_option:
             task.due_date = None
@@ -141,24 +145,6 @@ def edit(args):
 
     session.commit()
 delete_option = object()
-
-
-def append(args):
-    session = Session()
-    task = session.query(Task).get(args.id)
-    if not task:
-        raise yap.exceptions.TaskNotFoundError(args.id)
-    task.title = "%s %s" % (task.title, ' '.join(args.title))
-    session.commit()
-
-
-def prepend(args):
-    session = Session()
-    task = session.query(Task).get(args.id)
-    if not task:
-        raise yap.exceptions.TaskNotFoundError(args.id)
-    task.title = "%s %s" % (' '.join(args.title), task.title)
-    session.commit()
 
 
 def done(args):

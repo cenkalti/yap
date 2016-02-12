@@ -92,11 +92,11 @@ def duration(s):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(usage='%(prog)s subcommand [options]')
+    parser = argparse.ArgumentParser(usage='%(prog)s [-h] [-v] subcommand ...')
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s ' + yap.__version__)
 
-    subparsers = parser.add_subparsers(title="subcommands")
+    subparsers = parser.add_subparsers(title="subcommands", prog="yap", metavar="")
 
     parser_add = subparsers.add_parser('add', help="add new task")
     parser_add.set_defaults(func=yap.commands.add)

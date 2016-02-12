@@ -8,15 +8,10 @@ from tabulate import tabulate
 from sqlalchemy import case
 from sqlalchemy.exc import SQLAlchemyError
 
-import yap
 import yap.db
 import yap.exceptions
 import yap.json_util
 from yap.models import Task, Session
-
-
-def version(_):
-    print yap.__version__
 
 
 def next_(args):

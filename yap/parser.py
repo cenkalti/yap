@@ -6,6 +6,7 @@ from datetime import datetime, date, timedelta, time
 
 import isodate
 
+import yap
 import yap.commands
 import yap.exceptions
 
@@ -91,8 +92,11 @@ def duration(s):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
+    parser = argparse.ArgumentParser(usage='%(prog)s subcommand [options]')
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s ' + yap.__version__)
+
+    subparsers = parser.add_subparsers(title="subcommands")
 
     parser_add = subparsers.add_parser('add', help="add new task")
     parser_add.set_defaults(func=yap.commands.add)
@@ -195,10 +199,6 @@ def parse_args():
     parser_daemon = subparsers.add_parser('daemon',
                                           help="run notification daemon")
     parser_daemon.set_defaults(func=yap.commands.daemon)
-
-    parser_version = subparsers.add_parser('version',
-                                           help="show program version")
-    parser_version.set_defaults(func=yap.commands.version)
 
     # If invoked with no subcommand, run next subcommand
     if len(sys.argv) == 1:

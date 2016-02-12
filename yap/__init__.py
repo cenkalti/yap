@@ -9,7 +9,8 @@ Usage:
 
 """
 
-# TODO move up 3 subcommand (order column)
+# TODO add --before --after to add command (mutually exclusive)
+# TODO add --before --after to edit command (mutually exclusive)
 # TODO daemon subcommand
 # TODO notifications
 # TODO note command with $EDITOR

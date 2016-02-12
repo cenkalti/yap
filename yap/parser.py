@@ -173,6 +173,11 @@ def parse_args():
     parser_postpone.add_argument('due_date', type=due_date)
     parser_postpone.add_argument('id', type=int, nargs='+')
 
+    parser_context = subparsers.add_parser('context', help="get or set context")
+    parser_context.set_defaults(func=yap.commands.context)
+    parser_context.add_argument('name', nargs='?')
+    parser_context.add_argument('-c', '--clear', action='store_true')
+
     parser_export = subparsers.add_parser('export',
                                           help="export database as json")
     parser_export.set_defaults(func=yap.commands.export)
@@ -184,11 +189,6 @@ def parse_args():
     parser_import.set_defaults(func=yap.commands.import_)
     parser_import.add_argument('infile', nargs='?',
                                type=argparse.FileType('r'), default=sys.stdin)
-
-    parser_context = subparsers.add_parser('context', help="get or set context")
-    parser_context.set_defaults(func=yap.commands.context)
-    parser_context.add_argument('name', nargs='?')
-    parser_context.add_argument('-c', '--clear', action='store_true')
 
     parser_daemon = subparsers.add_parser('daemon',
                                           help="run notification daemon")

@@ -11,6 +11,7 @@ Usage:
 
 # TODO add --before --after to add command (mutually exclusive)
 # TODO add --before --after to edit command (mutually exclusive)
+# TODO add parent to tasks
 # TODO daemon subcommand
 # TODO notifications
 # TODO note command with $EDITOR

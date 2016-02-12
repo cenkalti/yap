@@ -2,7 +2,7 @@ import errno
 import json
 import os
 import subprocess
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 
 from tabulate import tabulate
 from sqlalchemy import case
@@ -76,8 +76,9 @@ def list_(args, only_next=False):
 
     tasks = query.all()
     if only_next:
-        overdue_all = [t for t in tasks if t.overdue]
-        not_overdue = [t for t in tasks if not t.overdue]
+        is_next = lambda t: t.remaining or timedelta.max < timedelta(days=1)
+        overdue_all = [t for t in tasks if is_next(t)]
+        not_overdue = [t for t in tasks if not is_next(t)]
         tasks = overdue_all + not_overdue[:1]
 
     table = [[getattr(task, attr) for attr in attrs] for task in tasks]

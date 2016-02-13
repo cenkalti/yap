@@ -18,13 +18,14 @@ class YapTestCase(unittest.TestCase):
     def tearDown(self):
         self.ifs.__exit__(None, None, None)
 
-    def invoke(self, *args):
-        args = ('--home', self.home) + args
-        return self.runner.invoke(cli, args)
+    def invoke(self, args):
+        args = ['--home', self.home] + args.split()
+        result = self.runner.invoke(cli, args)
+        self.assertEqual(result.exit_code, 0)
+        return result
 
     def test_version(self):
         result = self.invoke('--version')
-        self.assertEqual(result.exit_code, 0)
         self.assertIn(yap.__version__, result.output)
 
     def test_list(self):
@@ -34,5 +35,31 @@ class YapTestCase(unittest.TestCase):
         session.add(task)
         session.commit()
         result = self.invoke('list')
-        self.assertEqual(result.exit_code, 0)
         self.assertIn('test', result.output)
+
+    def test_add(self):
+        self.invoke('add deneme')
+        session = Session()
+        task = session.query(Task).one()
+        self.assertEqual(task.title, 'deneme')
+
+    def test_archive(self):
+        """archived tasks should not appear in list output"""
+        task = Task()
+        task.title = 'test'
+        session = Session()
+        session.add(task)
+        session.commit()
+        self.invoke('archive 1')
+        result = self.invoke('list')
+        self.assertNotIn('test', result.output)
+
+    def test_delete(self):
+        task = Task()
+        task.title = 'test'
+        session = Session()
+        session.add(task)
+        session.commit()
+        self.invoke('delete 1')
+        task = session.query(Task).first()
+        self.assertIsNone(task)

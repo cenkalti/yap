@@ -12,7 +12,7 @@ import yap
 import yap.db
 import yap.json_util
 from yap.models import Task, Session
-from yap.parsing import delete_option, due_date, wait_date, on_date, duration
+from yap.types import delete_option, due_date, wait_date, on_date, duration
 
 
 @click.group('yap', invoke_without_command=True,

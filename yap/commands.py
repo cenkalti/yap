@@ -260,26 +260,6 @@ def archive(id):
     session.commit()
 
 
-@cli.command('wait', short_help="Hide task until date")
-@click.argument('wait_date', type=wait_date)
-@click.argument('id', type=click.INT, nargs=-1)
-def wait_(wait_date, id):
-    session = Session()
-    session.query(Task).filter(Task.id.in_(id))\
-        .update({Task.wait_date: wait_date}, synchronize_session=False)
-    session.commit()
-
-
-@cli.command(short_help="Postpone due date")
-@click.argument('due_date', type=due_date)
-@click.argument('id', type=click.INT, nargs=-1)
-def postpone(due_date, id):
-    session = Session()
-    session.query(Task).filter(Task.id.in_(id))\
-        .update({Task.due_date: due_date}, synchronize_session=False)
-    session.commit()
-
-
 @cli.command('context', short_help="Get or set the context")
 @click.argument('name', required=False)
 @click.option('-c', '--clear', is_flag=True)

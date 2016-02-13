@@ -259,7 +259,7 @@ def archive(id):
     session.commit()
 
 
-@cli.command(short_help='wait', help="hide task until date")
+@cli.command('wait', short_help='wait', help="hide task until date")
 @click.argument('wait_date', type=wait_date)
 @click.argument('id', type=int, nargs=-1)
 def wait_(wait_date, id):
@@ -279,29 +279,32 @@ def postpone(due_date, id):
     session.commit()
 
 
-@cli.command(short_help='context', help="get or set context")
-@click.argument('name')
+@cli.command('context', short_help='context', help="get or set context")
+@click.argument('name', required=False)
 @click.option('-c', '--clear', is_flag=True)
 def context_(name, clear):
     if name:
-        with open(yap.CONTEXT_PATH, 'w') as f:
+        with open(_get_context_path(), 'w') as f:
             f.write(name)
     elif clear:
-        os.unlink(yap.CONTEXT_PATH)
+        os.unlink(_get_context_path())
     else:
         print _get_context()
 
 
 def _get_context():
-    ctx = click.get_current_context()
-    home = ctx.obj['home']
-    path = os.path.join(home, '.yap.context')
     try:
-        with open(path, 'r') as f:
+        with open(_get_context_path(), 'r') as f:
             return f.read()
     except IOError as e:
         if e.errno != errno.ENOENT:
             raise
+
+
+def _get_context_path():
+    ctx = click.get_current_context()
+    home = ctx.obj['home']
+    return os.path.join(home, '.yap.context')
 
 
 @cli.command(short_help="export database as json")

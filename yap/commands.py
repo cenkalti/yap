@@ -18,7 +18,8 @@ from yap.parsing import delete_option, due_date, wait_date, on_date, duration
 @click.group('yap', invoke_without_command=True,
              context_settings={'help_option_names': ['-h', '--help']})
 @click.version_option(version=yap.__version__)
-@click.option('--home', default="~", type=click.Path(file_okay=False))
+@click.option('--home', default="~", type=click.Path(file_okay=False),
+              help="Override directory for database file, default is user home")
 @click.pass_context
 def cli(ctx, home):
     home = os.path.expanduser(home)
@@ -37,7 +38,7 @@ def setup_db(home):
 cli.setup_db = setup_db
 
 
-@cli.command('list', short_help="list tasks")
+@cli.command('list', short_help="List tasks")
 @click.option('-c', '--context', help="only items in context")
 @click.option('-d', '--done', is_flag=True, help="only done tasks")
 @click.option('-w', '--waiting', is_flag=True, help="only waiting tasks")
@@ -101,13 +102,13 @@ def list_(context, done, waiting, archived, only_next=False):
     print tabulate(table, headers=headers, tablefmt='plain')
 
 
-@cli.command('next', short_help="list next tasks to do")
+@cli.command('next', short_help="List next tasks to do")
 @click.pass_context
 def next_(ctx):
     ctx.invoke(list_, only_next=True)
 
 
-@cli.command(short_help="show task detail")
+@cli.command(short_help="Show task detail")
 @click.argument('id', type=click.INT)
 def show(id):
     session = Session()
@@ -120,7 +121,7 @@ def show(id):
     session.close()
 
 
-@cli.command(short_help="add new task")
+@cli.command(short_help="Add new task")
 @click.argument('title', nargs=-1)
 @click.option('-d', '--due', type=due_date,
               help="do the task before due date")
@@ -156,7 +157,7 @@ def add(title, due, wait, on, recur, shift, context):
     print "id: %d" % task.id
 
 
-@cli.command(short_help="edit task")
+@cli.command(short_help="Edit task")
 @click.argument('id', type=click.INT)
 @click.option('-t', '--title', help="replace title")
 @click.option('-a', '--append', help="append text to title")
@@ -200,7 +201,7 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
     session.commit()
 
 
-@cli.command('done', short_help="mark task as done")
+@cli.command('done', short_help="Mark task as done")
 @click.argument('id', type=click.INT, nargs=-1)
 def done_(id):
     session = Session()
@@ -229,7 +230,7 @@ def done_(id):
     session.commit()
 
 
-@cli.command(short_help="mark task as undone")
+@cli.command(short_help="Mark task as undone")
 @click.argument('id', type=click.INT, nargs=-1)
 def undone(id):
     session = Session()
@@ -240,7 +241,7 @@ def undone(id):
     session.commit()
 
 
-@cli.command(short_help="delete task")
+@cli.command(short_help="Delete task")
 @click.argument('id', type=click.INT, nargs=-1)
 def delete(id):
     session = Session()
@@ -249,7 +250,7 @@ def delete(id):
     session.commit()
 
 
-@cli.command(short_help="archive task")
+@cli.command(short_help="Archive task")
 @click.argument('id', type=click.INT, nargs=-1)
 def archive(id):
     session = Session()
@@ -259,7 +260,7 @@ def archive(id):
     session.commit()
 
 
-@cli.command('wait', short_help='wait', help="hide task until date")
+@cli.command('wait', short_help="Hide task until date")
 @click.argument('wait_date', type=wait_date)
 @click.argument('id', type=click.INT, nargs=-1)
 def wait_(wait_date, id):
@@ -269,7 +270,7 @@ def wait_(wait_date, id):
     session.commit()
 
 
-@cli.command(short_help="postpone due date")
+@cli.command(short_help="Postpone due date")
 @click.argument('due_date', type=due_date)
 @click.argument('id', type=click.INT, nargs=-1)
 def postpone(due_date, id):
@@ -279,7 +280,7 @@ def postpone(due_date, id):
     session.commit()
 
 
-@cli.command('context', short_help='context', help="get or set context")
+@cli.command('context', short_help="Get or set the context")
 @click.argument('name', required=False)
 @click.option('-c', '--clear', is_flag=True)
 def context_(name, clear):
@@ -307,7 +308,7 @@ def _get_context_path():
     return os.path.join(home, '.yap.context')
 
 
-@cli.command(short_help="export database as json")
+@cli.command(short_help="Export database as JSON")
 @click.argument('output', type=click.File('w'))
 def export(output):
     session = Session()
@@ -319,7 +320,7 @@ def export(output):
     output.close()
 
 
-@cli.command('import', short_help="import tasks from json")
+@cli.command('import', short_help="Import tasks from JSON")
 @click.argument('input', type=click.File('r'))
 def import_(input):
     has_error = False

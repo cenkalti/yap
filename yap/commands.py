@@ -14,6 +14,8 @@ import yap.json_util
 from yap.models import Task, Session
 from yap.types import delete_option, due_date, wait_date, on_date, duration
 
+TaskNotFound = click.ClickException("Task not found")
+
 
 @click.group('yap', invoke_without_command=True,
              context_settings={'help_option_names': ['-h', '--help']})
@@ -114,7 +116,7 @@ def show(id):
     session = Session()
     task = session.query(Task).get(id)
     if not task:
-        raise click.ClickException("Task not found")
+        raise TaskNotFound
     for k, v in sorted(vars(task).items()):
         if not k.startswith('_'):
             click.echo("%s: %s" % (k, v))
@@ -172,7 +174,7 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
     session = Session()
     task = session.query(Task).get(id)
     if not task:
-        raise click.ClickException("Task not found")
+        raise TaskNotFound
 
     if title:
         task.title = None if title == delete_option else title
@@ -265,7 +267,7 @@ def archive(id):
     session = Session()
     task = session.query(Task).get(id)
     if not task:
-        raise click.ClickException("Task not found")
+        raise TaskNotFound
     task.id = yap.db.get_next_negative_id(session, Task)
     session.commit()
     click.echo("new id: %i" % task.id)

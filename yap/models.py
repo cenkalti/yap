@@ -103,7 +103,10 @@ class Task(Base):
             due_date = str_datetime(self.due_date)
             if self.overdue:
                 return red(due_date)
-            if self.remaining < timedelta(days=1):
+            yellow_after = self.due_date - timedelta(days=1)
+            if self.wait_date and self.wait_date > yellow_after:
+                yellow_after = self.wait_date
+            if datetime.now() > yellow_after:
                 return yellow(due_date)
             return due_date
 

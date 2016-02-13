@@ -108,7 +108,7 @@ def next_(ctx):
 
 
 @cli.command(short_help="show task detail")
-@click.argument('id', type=int)
+@click.argument('id', type=click.INT)
 def show(id):
     session = Session()
     task = session.query(Task).get(id)
@@ -157,7 +157,7 @@ def add(title, due, wait, on, recur, shift, context):
 
 
 @cli.command(short_help="edit task")
-@click.argument('id', type=int)
+@click.argument('id', type=click.INT)
 @click.option('-t', '--title', help="replace title")
 @click.option('-a', '--append', help="append text to title")
 @click.option('-p', '--prepend', help="prepend text to title")
@@ -201,7 +201,7 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
 
 
 @cli.command('done', short_help="mark task as done")
-@click.argument('id', type=int, nargs=-1)
+@click.argument('id', type=click.INT, nargs=-1)
 def done_(id):
     session = Session()
     tasks = session.query(Task).filter(Task.id.in_(id)).all()
@@ -230,7 +230,7 @@ def done_(id):
 
 
 @cli.command(short_help="mark task as undone")
-@click.argument('id', type=int, nargs=-1)
+@click.argument('id', type=click.INT, nargs=-1)
 def undone(id):
     session = Session()
     tasks = session.query(Task).filter(Task.id.in_(id)).all()
@@ -241,7 +241,7 @@ def undone(id):
 
 
 @cli.command(short_help="delete task")
-@click.argument('id', type=int, nargs=-1)
+@click.argument('id', type=click.INT, nargs=-1)
 def delete(id):
     session = Session()
     session.query(Task).filter(Task.id.in_(id))\
@@ -250,7 +250,7 @@ def delete(id):
 
 
 @cli.command(short_help="archive task")
-@click.argument('id', type=int, nargs=-1)
+@click.argument('id', type=click.INT, nargs=-1)
 def archive(id):
     session = Session()
     session.query(Task).filter(Task.id.in_(id))\
@@ -261,7 +261,7 @@ def archive(id):
 
 @cli.command('wait', short_help='wait', help="hide task until date")
 @click.argument('wait_date', type=wait_date)
-@click.argument('id', type=int, nargs=-1)
+@click.argument('id', type=click.INT, nargs=-1)
 def wait_(wait_date, id):
     session = Session()
     session.query(Task).filter(Task.id.in_(id))\
@@ -271,7 +271,7 @@ def wait_(wait_date, id):
 
 @cli.command(short_help="postpone due date")
 @click.argument('due_date', type=due_date)
-@click.argument('id', type=int, nargs=-1)
+@click.argument('id', type=click.INT, nargs=-1)
 def postpone(due_date, id):
     session = Session()
     session.query(Task).filter(Task.id.in_(id))\

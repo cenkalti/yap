@@ -260,13 +260,15 @@ def delete(id):
 
 
 @cli.command(short_help="Archive task")
-@click.argument('id', type=click.INT, nargs=-1)
+@click.argument('id', type=click.INT)
 def archive(id):
     session = Session()
-    session.query(Task).filter(Task.id.in_(id))\
-        .update({Task.id: yap.db.get_next_negative_id(session, Task)},
-                synchronize_session=False)
+    task = session.query(Task).get(id)
+    if not task:
+        raise click.ClickException("Task not found")
+    task.id = yap.db.get_next_negative_id(session, Task)
     session.commit()
+    click.echo("new id: %i" % task.id)
 
 
 @cli.command('context', short_help="Get or set the context")

@@ -9,8 +9,6 @@ Usage:
 
 """
 
-# TODO make datetime types click compatible
-# TODO click testing
 # TODO setup travis
 # TODO coverage
 # TODO skip recurred tasks (http://orgmode.org/manual/Repeated-tasks.html)

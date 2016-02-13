@@ -114,7 +114,7 @@ def show(id):
     session = Session()
     task = session.query(Task).get(id)
     if not task:
-        raise click.ClickException("task not found")
+        raise click.ClickException("Task not found")
     for k, v in sorted(vars(task).items()):
         if not k.startswith('_'):
             print "%s: %s" % (k, v)
@@ -172,14 +172,14 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
     session = Session()
     task = session.query(Task).get(id)
     if not task:
-        raise click.ClickException("task not found")
+        raise click.ClickException("Task not found")
 
     if title:
-        task.title = None if title == delete_option else ' '.join(title)
+        task.title = None if title == delete_option else title
     if append:
-        task.title = "%s %s" % (task.title, ' '.join(append))
+        task.title = "%s %s" % (task.title, append)
     if prepend:
-        task.title = "%s %s" % (' '.join(prepend), task.title)
+        task.title = "%s %s" % (prepend, task.title)
     if recur:
         task.recur = None if recur == delete_option else recur
     if on:

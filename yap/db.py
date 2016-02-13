@@ -1,7 +1,7 @@
 from sqlalchemy import MetaData, Table, func
 from sqlalchemy.sql.ddl import CreateTable
 
-from yap.models import Task, engine, Session
+from yap.models import Task, Session
 
 
 def setup():
@@ -34,7 +34,7 @@ def setup():
 
 def _create_table(session, table):
     # Table.create() does commit() implicitly, we do not want this.
-    sql = str(CreateTable(table).compile(engine))
+    sql = str(CreateTable(table).compile(session.get_bind()))
     session.execute(sql)
 
 

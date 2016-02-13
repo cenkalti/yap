@@ -1,10 +1,10 @@
-import errno
-import json
 import os
+import json
+import errno
 from datetime import datetime, date, time, timedelta
 
 import click
-from sqlalchemy import case
+from sqlalchemy import create_engine, case
 from sqlalchemy.exc import SQLAlchemyError
 from tabulate import tabulate
 
@@ -18,11 +18,23 @@ from yap.parsing import delete_option, due_date, wait_date, on_date, duration
 @click.group('yap', invoke_without_command=True,
              context_settings={'help_option_names': ['-h', '--help']})
 @click.version_option(version=yap.__version__)
+@click.option('--home', default="~", type=click.Path(file_okay=False))
 @click.pass_context
-def cli(ctx):
-    yap.db.setup()
+def cli(ctx, home):
+    home = os.path.expanduser(home)
+    ctx.obj = {'home': home}
+    cli.setup_db(home)
     if ctx.invoked_subcommand is None:
         ctx.invoke(next_)
+
+
+def setup_db(home):
+    db_path = os.path.join(home, '.yap.sqlite')
+    sql_echo = bool(os.environ.get('YAP_SQL_ECHO'))
+    engine = create_engine('sqlite:///%s' % db_path, echo=sql_echo)
+    Session.configure(bind=engine)
+    yap.db.setup()
+cli.setup_db = setup_db
 
 
 @cli.command('list', short_help="list tasks")
@@ -281,8 +293,11 @@ def context_(name, clear):
 
 
 def _get_context():
+    ctx = click.get_current_context()
+    home = ctx.obj['home']
+    path = os.path.join(home, '.yap.context')
     try:
-        with open(yap.CONTEXT_PATH, 'r') as f:
+        with open(path, 'r') as f:
             return f.read()
     except IOError as e:
         if e.errno != errno.ENOENT:

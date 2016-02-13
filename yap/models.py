@@ -1,19 +1,13 @@
-import os
 from datetime import datetime, timedelta, time
 
 import isodate
-from sqlalchemy import (Column, Integer, String, DateTime, Boolean,
-                        and_, create_engine, func)
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, and_, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
-import yap
-
-_sql_echo = bool(os.environ.get('YAP_SQL_ECHO'))
-engine = create_engine('sqlite:///%s' % yap.DB_PATH, echo=_sql_echo)
-Session = sessionmaker(bind=engine)
+Session = sessionmaker()
 
 
 class Base(object):

@@ -25,10 +25,6 @@ Usage:
 # TODO search
 # TODO filters (https://taskwarrior.org/docs/syntax.html) (https://taskwarrior.org/docs/filter.html)
 
-import os
-
 __version__ = "0.0.0"
 
-DB_PATH = os.path.expanduser('~/.yap.sqlite')
-CONTEXT_PATH = os.path.expanduser('~/.yap.context')
 LIST_DONE_MAX = 20

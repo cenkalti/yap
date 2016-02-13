@@ -1,39 +1,48 @@
 import errno
 import json
 import os
-import subprocess
 from datetime import datetime, date, time, timedelta
 
-from tabulate import tabulate
+import click
 from sqlalchemy import case
 from sqlalchemy.exc import SQLAlchemyError
+from tabulate import tabulate
 
+import yap
 import yap.db
 import yap.exceptions
 import yap.json_util
 from yap.models import Task, Session
+from yap.parsing import delete_option, due_date, wait_date, on_date, duration
 
 
-def next_(args):
-    args.done = None
-    args.waiting = None
-    args.archived = None
-    args.context = None
-    list_(args, only_next=True)
+@click.group(invoke_without_command=True,
+             context_settings={'help_option_names': ['-h', '--help']})
+@click.version_option(version=yap.__version__)
+@click.pass_context
+def cli(ctx):
+    yap.db.setup()
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(next_)
 
 
-def list_(args, only_next=False):
+@cli.command('list', short_help="list tasks")
+@click.option('-c', '--context', help="only items in context")
+@click.option('-d', '--done', is_flag=True, help="only done tasks")
+@click.option('-w', '--waiting', is_flag=True, help="only waiting tasks")
+@click.option('-a', '--archived', is_flag=True, help="only archived tasks")
+def list_(context, done, waiting, archived, only_next=False):
     session = Session()
     query = session.query(Task)
 
     headers = ['ID']
     attrs = ['id']
 
-    ctx = args.context or _get_context()
+    ctx = context or _get_context()
     if ctx:
         query = query.filter(Task.context == ctx)
 
-    if args.done:
+    if done:
         headers.append('Done at')
         attrs.append('str_done_at')
         query = query\
@@ -41,14 +50,14 @@ def list_(args, only_next=False):
             .filter(Task.archived != True)\
             .order_by(Task.done_at.desc())\
             .limit(yap.LIST_DONE_MAX)
-    elif args.waiting:
+    elif waiting:
         headers.append('Wait date')
         attrs.append('str_wait_date')
         query = query\
             .filter(Task.waiting == True)\
             .filter(Task.archived != True)\
             .order_by(Task.wait_date)
-    elif args.archived:
+    elif archived:
         query = query.filter(Task.archived == True)\
             .order_by(Task.created_at.desc())
     else:
@@ -81,75 +90,110 @@ def list_(args, only_next=False):
     print tabulate(table, headers=headers, tablefmt='plain')
 
 
-def show(args):
+@cli.command('next', short_help="list next tasks to do")
+@click.pass_context
+def next_(ctx):
+    ctx.invoke(list_, only_next=True)
+
+
+@cli.command(short_help="show task detail")
+@click.argument('id', type=int)
+def show(id):
     session = Session()
-    task = session.query(Task).get(args.id)
+    task = session.query(Task).get(id)
     if not task:
-        raise yap.exceptions.TaskNotFoundError(args.id)
+        raise click.ClickException("task not found")
     for k, v in sorted(vars(task).items()):
         if not k.startswith('_'):
             print "%s: %s" % (k, v)
     session.close()
 
 
-def add(args):
+@cli.command(short_help="add new task")
+@click.argument('title', nargs=-1)
+@click.option('-d', '--due', type=due_date,
+              help="do the task before due date")
+@click.option('-w', '--wait', type=wait_date,
+              help="do not show the task before wait date")
+@click.option('-o', '--on', type=on_date,
+              help="set due date and wait date to same day")
+@click.option('-r', '--recur', type=duration,
+              help="repeat the task periodically")
+@click.option('-s', '--shift', is_flag=True,
+              help="when the task is done forward due date "
+                   "exactly one recurrence period after done date")
+@click.option('-c', '--context',
+              help="set a context other than current context")
+def add(title, due, wait, on, recur, shift, context):
     session = Session()
     task = Task()
     task.id = yap.db.get_smallest_empty_id(session, Task)
-    task.title = ' '.join(args.title)
-    if args.on:
-        task.due_date = datetime.combine(args.on, time.max)
-        task.wait_date = datetime.combine(args.on, time.min)
+    task.title = ' '.join(title)
+    if on:
+        task.due_date = datetime.combine(on, time.max)
+        task.wait_date = datetime.combine(on, time.min)
     else:
-        task.due_date = args.due
-        task.wait_date = args.wait
-    task.context = args.context or _get_context()
-    task.recur = args.recur
+        task.due_date = due
+        task.wait_date = wait
+    task.context = context or _get_context()
+    task.recur = recur
     if task.recur:
-        task.shift = args.shift
+        task.shift = shift
     task.order = Task.find_next_order(session)
     session.add(task)
     session.commit()
     print "id: %d" % task.id
 
 
-def edit(args):
+@cli.command(short_help="edit task")
+@click.argument('id', type=int)
+@click.option('-t', '--title', help="replace title")
+@click.option('-a', '--append', help="append text to title")
+@click.option('-p', '--prepend', help="prepend text to title")
+@click.option('-d', '--due', type=due_date)
+@click.option('-w', '--wait', type=wait_date)
+@click.option('-o', '--on', type=on_date)
+@click.option('-r', '--recur', type=duration)
+@click.option('-s', '--shift', is_flag=True)
+@click.option('-c', '--context')
+def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
     session = Session()
-    task = session.query(Task).get(args.id)
+    task = session.query(Task).get(id)
     if not task:
-        raise yap.exceptions.TaskNotFoundError(args.id)
+        raise click.ClickException("task not found")
 
-    if args.title:
-        task.title = None if args.title == delete_option else ' '.join(args.title)
-    if args.append:
-        task.title = "%s %s" % (task.title, ' '.join(args.append))
-    if args.prepend:
-        task.title = "%s %s" % (' '.join(args.prepend), task.title)
-    if args.on:
-        if args.on == delete_option:
+    if title:
+        task.title = None if title == delete_option else ' '.join(title)
+    if append:
+        task.title = "%s %s" % (task.title, ' '.join(append))
+    if prepend:
+        task.title = "%s %s" % (' '.join(prepend), task.title)
+    if on:
+        if on == delete_option:
             task.due_date = None
             task.wait_date = None
         else:
-            task.due_date = datetime.combine(args.on, time.max)
-            task.wait_date = datetime.combine(args.on, time.min)
-    if args.due:
-        task.due_date = None if args.due == delete_option else args.due
-    if args.wait:
-        task.wait_date = None if args.wait == delete_option else args.wait
-    if args.context:
-        task.context = None if args.context == delete_option else args.context
-    if args.recur:
-        task.recur = None if args.recur == delete_option else args.recur
-    if args.shift is not None:
-        task.shift = args.shift
+            task.due_date = datetime.combine(on, time.max)
+            task.wait_date = datetime.combine(on, time.min)
+    if due:
+        task.due_date = None if due == delete_option else due
+    if wait:
+        task.wait_date = None if wait == delete_option else wait
+    if context:
+        task.context = None if context == delete_option else context
+    if recur:
+        task.recur = None if recur == delete_option else recur
+    if shift is not None:
+        task.shift = shift
 
     session.commit()
-delete_option = object()
 
 
-def done(args):
+@cli.command(short_help="mark task as done")
+@click.argument('id', type=int, nargs=-1)
+def done(id):
     session = Session()
-    tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
+    tasks = session.query(Task).filter(Task.id.in_(id)).all()
     for task in tasks:
         if task.recurring:
             new_task = Task.from_dict(task.to_dict())
@@ -174,76 +218,64 @@ def done(args):
     session.commit()
 
 
-def undone(args):
+@cli.command(short_help="mark task as undone")
+@click.argument('id', type=int, nargs=-1)
+def undone(id):
     session = Session()
-    tasks = session.query(Task).filter(Task.id.in_(args.id)).all()
+    tasks = session.query(Task).filter(Task.id.in_(id)).all()
     for task in tasks:
         task.id = yap.db.get_smallest_empty_id(session, Task)
         task.done_at = None
     session.commit()
 
 
-def delete(args):
+@cli.command(short_help="delete task")
+@click.argument('id', type=int, nargs=-1)
+def delete(id):
     session = Session()
-    session.query(Task).filter(Task.id.in_(args.id))\
+    session.query(Task).filter(Task.id.in_(id))\
         .delete(synchronize_session=False)
     session.commit()
 
 
-def archive(args):
+@cli.command(short_help="archive task")
+@click.argument('id', type=int, nargs=-1)
+def archive(id):
     session = Session()
-    session.query(Task).filter(Task.id.in_(args.id))\
+    session.query(Task).filter(Task.id.in_(id))\
         .update({Task.id: yap.db.get_next_negative_id(session, Task)},
                 synchronize_session=False)
     session.commit()
 
 
-def wait(args):
+@cli.command(short_help='wait', help="hide task until date")
+@click.argument('wait_date', type=wait_date)
+@click.argument('id', type=int, nargs=-1)
+def wait_(wait_date, id):
     session = Session()
-    session.query(Task).filter(Task.id.in_(args.id))\
-        .update({Task.wait_date: args.wait_date}, synchronize_session=False)
+    session.query(Task).filter(Task.id.in_(id))\
+        .update({Task.wait_date: wait_date}, synchronize_session=False)
     session.commit()
 
 
-def postpone(args):
+@cli.command(short_help="postpone due date")
+@click.argument('due_date', type=due_date)
+@click.argument('id', type=int, nargs=-1)
+def postpone(due_date, id):
     session = Session()
-    session.query(Task).filter(Task.id.in_(args.id))\
-        .update({Task.due_date: args.due_date}, synchronize_session=False)
+    session.query(Task).filter(Task.id.in_(id))\
+        .update({Task.due_date: due_date}, synchronize_session=False)
     session.commit()
 
 
-def export(args):
-    session = Session()
-    d = {'task': [task.to_dict() for task in session.query(Task).all()]}
-    session.close()
-    out = json.dumps(d, default=yap.json_util.datetime_encoder, indent=2)
-    args.outfile.write(out)
-    args.outfile.write('\n')
-    args.outfile.close()
-
-
-def import_(args):
-    has_error = False
-    d = json.load(args.infile, object_hook=yap.json_util.datetime_decoder)
-    for task in d['task']:
-        session = Session()
-        session.add(Task.from_dict(task))
-        try:
-            session.commit()
-        except SQLAlchemyError as e:
-            print e
-            has_error = True
-        finally:
-            session.close()
-    if has_error:
-        raise yap.exceptions.TaskImportError
-
-
-def context(args):
-    if args.name:
+@cli.command(short_help='context', help="get or set context")
+@click.argument('name')
+@click.option('-c', '--clear', is_flag=True)
+def context_(name, clear):
+    if name:
         with open(yap.CONTEXT_PATH, 'w') as f:
-            f.write(args.name)
-    elif args.clear:
+            f.write(name)
+    elif clear:
         os.unlink(yap.CONTEXT_PATH)
     else:
         print _get_context()
@@ -258,14 +290,32 @@ def _get_context():
             raise
 
 
-def daemon(args):  # TODO
-    pass
+@cli.command(short_help="export database as json")
+@click.argument('output', type=click.File('w'))
+def export(output):
+    session = Session()
+    d = {'task': [task.to_dict() for task in session.query(Task).all()]}
+    session.close()
+    out = json.dumps(d, default=yap.json_util.datetime_encoder, indent=2)
+    output.write(out)
+    output.write('\n')
+    output.close()
 
 
-def _run_script(script):  # TODO
-    return subprocess.check_output(
-            ['osascript', '-'], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-
-
-def _display_notification(message, title):  # TODO
-    pass
+@cli.command('import', short_help="import tasks from json")
+@click.argument('input', type=click.File('r'))
+def import_(input):
+    has_error = False
+    d = json.load(input, object_hook=yap.json_util.datetime_decoder)
+    for task in d['task']:
+        session = Session()
+        session.add(Task.from_dict(task))
+        try:
+            session.commit()
+        except SQLAlchemyError as e:
+            print e
+            has_error = True
+        finally:
+            session.close()
+    if has_error:
+        raise click.ClickException("import completed with errors")

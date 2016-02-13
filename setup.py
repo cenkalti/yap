@@ -29,12 +29,13 @@ setup(
         'SQLAlchemy>=1.0,<2',
         'tabulate>=0.7,<2',
         'isodate>=0.5,<2',
+        'click>=6.2,<7',
     ],
     description='Command line todo app',
     zip_safe=True,
     entry_points={
         'console_scripts': [
-            'yap = yap.__main__:main',
+            'yap = yap.commands:cli',
         ],
     },
     classifiers=[

@@ -79,8 +79,8 @@ def list_(context, done, waiting, archived, only_next=False):
             .order_by(  # Show tasks with order date first
                 case([(Task.due_date == None, 0)], 1),
                 Task.due_date,
-                case([(Task.order == None, 0)], 1),
-                Task.order.desc())
+                case([(Task.order == None, 1)], 0),
+                Task.order.asc())
 
     headers.append('Due date')
     attrs.append('str_due_date')

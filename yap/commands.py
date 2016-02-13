@@ -99,7 +99,7 @@ def list_(context, done, waiting, archived, only_next=False):
 
     table = [[getattr(task, attr) for attr in attrs] for task in tasks]
     session.close()
-    print tabulate(table, headers=headers, tablefmt='plain')
+    click.echo(tabulate(table, headers=headers, tablefmt='plain'))
 
 
 @cli.command('next', short_help="List next tasks to do")
@@ -117,7 +117,7 @@ def show(id):
         raise click.ClickException("Task not found")
     for k, v in sorted(vars(task).items()):
         if not k.startswith('_'):
-            print "%s: %s" % (k, v)
+            click.echo("%s: %s" % (k, v))
     session.close()
 
 
@@ -154,7 +154,7 @@ def add(title, due, wait, on, recur, shift, context):
     task.order = Task.find_next_order(session)
     session.add(task)
     session.commit()
-    print "id: %d" % task.id
+    click.echo("id: %d" % task.id)
 
 
 @cli.command(short_help="Edit task")
@@ -279,7 +279,7 @@ def context_(name, clear):
     elif clear:
         os.unlink(_get_context_path())
     else:
-        print _get_context()
+        click.echo(_get_context())
 
 
 def _get_context():
@@ -320,7 +320,7 @@ def import_(input):
         try:
             session.commit()
         except SQLAlchemyError as e:
-            print e
+            click.echo(e)
             has_error = True
         finally:
             session.close()

@@ -10,13 +10,12 @@ from tabulate import tabulate
 
 import yap
 import yap.db
-import yap.exceptions
 import yap.json_util
 from yap.models import Task, Session
 from yap.parsing import delete_option, due_date, wait_date, on_date, duration
 
 
-@click.group(invoke_without_command=True,
+@click.group('yap', invoke_without_command=True,
              context_settings={'help_option_names': ['-h', '--help']})
 @click.version_option(version=yap.__version__)
 @click.pass_context
@@ -189,9 +188,9 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
     session.commit()
 
 
-@cli.command(short_help="mark task as done")
+@cli.command('done', short_help="mark task as done")
 @click.argument('id', type=int, nargs=-1)
-def done(id):
+def done_(id):
     session = Session()
     tasks = session.query(Task).filter(Task.id.in_(id)).all()
     for task in tasks:

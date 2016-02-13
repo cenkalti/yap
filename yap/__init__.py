@@ -9,7 +9,11 @@ Usage:
 
 """
 
+# TODO make datetime types click compatible
 # TODO click testing
+# TODO setup travis
+# TODO coverage
+# TODO skip recurred tasks (http://orgmode.org/manual/Repeated-tasks.html)
 # TODO add --before --after to add command (mutually exclusive)
 # TODO add --before --after to edit command (mutually exclusive)
 # TODO add parent to tasks

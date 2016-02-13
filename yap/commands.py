@@ -180,7 +180,10 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
         task.title = "%s %s" % (task.title, ' '.join(append))
     if prepend:
         task.title = "%s %s" % (' '.join(prepend), task.title)
+    if recur:
+        task.recur = None if recur == delete_option else recur
     if on:
+        _confirm_date_change(task.recur, 'due and wait dates')
         if on == delete_option:
             task.due_date = None
             task.wait_date = None
@@ -188,17 +191,23 @@ def edit(id, title, append, prepend, due, wait, on, recur, shift, context):
             task.due_date = datetime.combine(on, time.max)
             task.wait_date = datetime.combine(on, time.min)
     if due:
+        _confirm_date_change(task.recur, 'due date')
         task.due_date = None if due == delete_option else due
     if wait:
+        _confirm_date_change(task.recur, 'wait date')
         task.wait_date = None if wait == delete_option else wait
     if context:
         task.context = None if context == delete_option else context
-    if recur:
-        task.recur = None if recur == delete_option else recur
     if shift is not None:
         task.shift = shift
 
     session.commit()
+
+
+def _confirm_date_change(recurring, field):
+    if recurring:
+        click.confirm("This is a recurring task. "
+                      "Are you sure to edit %s?" % field, abort=True)
 
 
 @cli.command('done', short_help="Mark task as done")

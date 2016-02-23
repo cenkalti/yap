@@ -5,18 +5,21 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"time"
+
+	"github.com/satori/go.uuid"
 )
 
 type Task struct {
-	ID    int64
-	Title string
+	UUID      uuid.UUID
+	Title     string
+	CreatedAt time.Time
 }
 
 func NewTaskFromFile(dir, name string) (t Task, err error) {
-	id := name[:len(name)-5]
-	t.ID, err = strconv.ParseInt(id, 36, 64)
+	uuidStr := name[:len(name)-len(taskExt)]
+	t.UUID, err = uuid.FromString(uuidStr)
 	if err != nil {
 		return
 	}
@@ -40,6 +43,11 @@ func NewTaskFromFile(dir, name string) (t Task, err error) {
 		switch key {
 		case "title":
 			t.Title = value
+		case "created_at":
+			t.CreatedAt, err = time.Parse(time.RFC3339Nano, value)
+			if err != nil {
+				return
+			}
 		default:
 			err = errors.New("invalid key")
 			return
@@ -53,15 +61,19 @@ func (t Task) Line() string {
 	return strconv.FormatInt(t.ID, 36) + " " + t.Title
 }
 
-func (t Task) WriteToFile(dir string) error {
-	f, err := os.Create(filepath.Join(dir, strconv.FormatInt(t.ID, 36)) + ".task")
+func (t Task) Write() error {
+	path := filepath.Join(tasksDir, t.UUID.String()) + taskExt
+	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	w := bufio.NewWriter(f)
 	w.WriteString("title " + t.Title + "\n")
-	err = w.Flush()
-	if err != nil {
+	w.WriteString("created_at " + t.CreatedAt.Format(time.RFC3339Nano) + "\n")
+	if err = w.Flush(); err != nil {
+		return err
+	}
+	if err = f.Sync(); err != nil {
 		return err
 	}
 	return f.Close()
@@ -79,7 +91,7 @@ func ListTasks() ([]Task, error) {
 	}
 	var tasks []Task
 	for _, name := range names {
-		if !strings.HasSuffix(name, ".task") {
+		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
 		t, err := NewTaskFromFile(tasksDir, name)
@@ -89,34 +101,4 @@ func ListTasks() ([]Task, error) {
 		tasks = append(tasks, t)
 	}
 	return tasks, nil
-}
-
-func NextTaskID() (id int64, err error) {
-	f, err := os.Open(tasksDir)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	names, err := f.Readdirnames(-1)
-	if err != nil {
-		return
-	}
-	ids := make(map[int64]struct{})
-	for _, name := range names {
-		if !strings.HasSuffix(name, ".task") {
-			continue
-		}
-		strID := name[:len(name)-5]
-		id, err = strconv.ParseInt(strID, 36, 64)
-		if err != nil {
-			return
-		}
-		ids[id] = struct{}{}
-	}
-	for id = int64(1); ; id++ {
-		_, ok := ids[id]
-		if !ok {
-			return
-		}
-	}
 }

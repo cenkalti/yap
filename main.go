@@ -6,13 +6,25 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/mitchellh/go-homedir"
+	"github.com/satori/go.uuid"
 )
 
-var yapHome string
-var tasksDir string
+const taskExt = ".task"
+
+var (
+	yapHome           string
+	tasksDir          string
+	pendingTasksDir   string
+	completedTasksDir string
+)
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
 
 func main() {
 	app := cli.NewApp()
@@ -32,30 +44,45 @@ func main() {
 			Destination: &yapHome,
 		},
 	}
-	app.Before = func(c *cli.Context) error {
-		var err error
-		yapHome, err = homedir.Expand(c.GlobalString("home"))
-		if err != nil {
-			return err
+	app.Before = func(c *cli.Context) (err error) {
+		if yapHome, err = homedir.Expand(c.GlobalString("home")); err != nil {
+			return
 		}
 		tasksDir = filepath.Join(yapHome, "tasks")
-		return os.MkdirAll(tasksDir, 0700)
+		if err = os.MkdirAll(tasksDir, 0700); err != nil {
+			return
+		}
+		pendingTasksDir = filepath.Join(tasksDir, "pending")
+		if err = os.MkdirAll(pendingTasksDir, 0700); err != nil {
+			return
+		}
+		completedTasksDir = filepath.Join(tasksDir, "completed")
+		if err = os.MkdirAll(completedTasksDir, 0700); err != nil {
+			return
+		}
+		return
 	}
 	app.Action = func(c *cli.Context) {
 		if len(c.Args()) == 0 {
 			cli.ShowAppHelp(c)
 			return
 		}
-		id, err := NextTaskID()
+		id, err := NextTaskID(pendingTasksDir)
 		if err != nil {
 			log.Fatal(err)
 		}
-		t := Task{
-			ID:    id,
-			Title: strings.Join(c.Args(), " "),
+		t := PendingTask{
+			ID: id,
+			Task: Task{
+				UUID:      uuid.NewV1(),
+				Title:     strings.Join(c.Args(), " "),
+				CreatedAt: time.Now(),
+			},
 		}
-		err = t.WriteToFile(tasksDir)
-		if err != nil {
+		if err := t.Task.Write(); err != nil {
+			log.Fatal(err)
+		}
+		if err = t.Link(); err != nil {
 			log.Fatal(err)
 		}
 	}

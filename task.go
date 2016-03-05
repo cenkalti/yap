@@ -11,6 +11,8 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+const taskExt = ".task"
+
 // Task is a file stored in tasksDir.
 // UUID field is same with the filename of the task. Example: <tasksDir>/<UUID>.task
 type Task struct {

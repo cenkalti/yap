@@ -13,8 +13,6 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-const taskExt = ".task"
-
 var (
 	yapHome           string
 	tasksDir          string
@@ -62,8 +60,7 @@ func main() {
 		}
 		return
 	}
-	// Default subcommand is "add".
-	app.Action = cmdAdd
+	app.Action = cmdAdd // Default subcommand is "add".
 	app.Commands = []cli.Command{
 		{
 			Name:    "add",

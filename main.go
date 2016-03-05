@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/mitchellh/go-homedir"
+	"github.com/olekukonko/tablewriter"
 	"github.com/satori/go.uuid"
 )
 
@@ -118,7 +118,13 @@ func cmdList(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _, t := range tasks {
-		fmt.Println(t.Line())
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetBorder(false)
+	table.SetHeaderLine(false)
+	table.SetAutoFormatHeaders(false)
+	table.SetHeader([]string{"Title"})
+	for _, v := range tasks {
+		table.Append([]string{v.Title})
 	}
+	table.Render()
 }

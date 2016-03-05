@@ -60,12 +60,6 @@ func NewTaskFromFile(dir, filename string) (t Task, err error) {
 	return
 }
 
-// Line returns a string for print the task to console.
-func (t Task) Line() string {
-	// return strconv.FormatInt(t.ID, 36) + " " + t.Title
-	return t.Title
-}
-
 // Write the task to file at <tasksDir>/<UUID>.task
 func (t Task) Write() error {
 	path := filepath.Join(tasksDir, t.UUID.String()) + taskExt

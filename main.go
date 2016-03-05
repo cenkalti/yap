@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -115,6 +116,7 @@ func cmdList(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	sort.Sort(byCreatedAtDesc(tasks))
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetBorder(false)
 	table.SetHeaderLine(false)

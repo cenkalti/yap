@@ -62,6 +62,7 @@ func main() {
 		}
 		return
 	}
+	// Default subcommand is "add".
 	app.Action = func(c *cli.Context) {
 		if len(c.Args()) == 0 {
 			cli.ShowAppHelp(c)

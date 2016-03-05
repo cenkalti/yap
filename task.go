@@ -58,7 +58,8 @@ func NewTaskFromFile(dir, name string) (t Task, err error) {
 }
 
 func (t Task) Line() string {
-	return strconv.FormatInt(t.ID, 36) + " " + t.Title
+	// return strconv.FormatInt(t.ID, 36) + " " + t.Title
+	return t.Title
 }
 
 func (t Task) Write() error {

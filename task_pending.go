@@ -7,17 +7,20 @@ import (
 	"strings"
 )
 
+// PendingTask is a Task that is not completed yet.
 type PendingTask struct {
 	ID int
 	Task
 }
 
+// Link writes a symlink to pendingTasksDir that is pointing to original task in tasksDir.
 func (t PendingTask) Link() error {
 	src := filepath.Join("..", t.UUID.String()+taskExt)
 	dst := filepath.Join(pendingTasksDir, strconv.Itoa(t.ID)+taskExt)
 	return os.Symlink(src, dst)
 }
 
+// NextTaskID returns the minimum available integer id in path.
 func NextTaskID(path string) (id int, err error) {
 	f, err := os.Open(path)
 	if err != nil {

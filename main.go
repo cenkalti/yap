@@ -63,50 +63,19 @@ func main() {
 		return
 	}
 	// Default subcommand is "add".
-	app.Action = func(c *cli.Context) {
-		if len(c.Args()) == 0 {
-			cli.ShowAppHelp(c)
-			return
-		}
-		id, err := NextTaskID(pendingTasksDir)
-		if err != nil {
-			log.Fatal(err)
-		}
-		t := PendingTask{
-			ID: id,
-			Task: Task{
-				UUID:      uuid.NewV1(),
-				Title:     strings.Join(c.Args(), " "),
-				CreatedAt: time.Now(),
-			},
-		}
-		if err := t.Task.Write(); err != nil {
-			log.Fatal(err)
-		}
-		if err = t.Link(); err != nil {
-			log.Fatal(err)
-		}
-	}
+	app.Action = cmdAdd
 	app.Commands = []cli.Command{
 		{
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "add new task",
-			Action:  app.Action,
+			Action:  cmdAdd,
 		},
 		{
 			Name:    "list",
 			Aliases: []string{"l"},
 			Usage:   "list tasks",
-			Action: func(c *cli.Context) {
-				tasks, err := ListTasks()
-				if err != nil {
-					log.Fatal(err)
-				}
-				for _, t := range tasks {
-					fmt.Println(t.Line())
-				}
-			},
+			Action:  cmdList,
 		},
 		{
 			Name:    "complete",
@@ -117,4 +86,39 @@ func main() {
 		},
 	}
 	app.Run(os.Args)
+}
+
+func cmdAdd(c *cli.Context) {
+	if len(c.Args()) == 0 {
+		cli.ShowAppHelp(c)
+		return
+	}
+	id, err := NextTaskID(pendingTasksDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	t := PendingTask{
+		ID: id,
+		Task: Task{
+			UUID:      uuid.NewV1(),
+			Title:     strings.Join(c.Args(), " "),
+			CreatedAt: time.Now(),
+		},
+	}
+	if err = t.Task.Write(); err != nil {
+		log.Fatal(err)
+	}
+	if err = t.Link(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func cmdList(c *cli.Context) {
+	tasks, err := ListTasks()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, t := range tasks {
+		fmt.Println(t.Line())
+	}
 }

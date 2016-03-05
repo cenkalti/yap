@@ -11,19 +11,22 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// Task is a file stored in tasksDir.
+// UUID field is same with the filename of the task. Example: <tasksDir>/<UUID>.task
 type Task struct {
 	UUID      uuid.UUID
 	Title     string
 	CreatedAt time.Time
 }
 
-func NewTaskFromFile(dir, name string) (t Task, err error) {
-	uuidStr := name[:len(name)-len(taskExt)]
+// NewTaskFromFile parsed filename in dir as a Task.
+func NewTaskFromFile(dir, filename string) (t Task, err error) {
+	uuidStr := filename[:len(filename)-len(taskExt)]
 	t.UUID, err = uuid.FromString(uuidStr)
 	if err != nil {
 		return
 	}
-	f, err := os.Open(filepath.Join(dir, name))
+	f, err := os.Open(filepath.Join(dir, filename))
 	if err != nil {
 		return
 	}
@@ -57,11 +60,13 @@ func NewTaskFromFile(dir, name string) (t Task, err error) {
 	return
 }
 
+// Line returns a string for print the task to console.
 func (t Task) Line() string {
 	// return strconv.FormatInt(t.ID, 36) + " " + t.Title
 	return t.Title
 }
 
+// Write the task to file at <tasksDir>/<UUID>.task
 func (t Task) Write() error {
 	path := filepath.Join(tasksDir, t.UUID.String()) + taskExt
 	f, err := os.Create(path)
@@ -80,6 +85,7 @@ func (t Task) Write() error {
 	return f.Close()
 }
 
+// ListTasks returns all tasks in tasksDir.
 func ListTasks() ([]Task, error) {
 	f, err := os.Open(tasksDir)
 	if err != nil {

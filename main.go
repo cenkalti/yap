@@ -4,13 +4,17 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
 	"github.com/olekukonko/tablewriter"
 )
+
+// DefaultYapHome is the directory where yap keeps all task and configuration files.
+const DefaultYapHome = "~/.yap"
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -35,7 +39,7 @@ func main() {
 		},
 	}
 	app.Before = func(c *cli.Context) error {
-		return SetHome(c.GlobalString("home"))
+		return task.SetHome(c.GlobalString("home"))
 	}
 	app.Action = cmdAdd // Default subcommand is "add".
 	app.Commands = []cli.Command{
@@ -68,34 +72,18 @@ func cmdAdd(c *cli.Context) {
 		cli.ShowAppHelp(c)
 		return
 	}
-	sid, err := NextTaskID(DirPendingTasks)
+	title := strings.Join(c.Args(), " ")
+	err := task.Add(title)
 	if err != nil {
-		log.Fatal(err)
-	}
-	t := PendingTask{
-		TaskWithSmallID{
-			SmallID: sid,
-			Task: Task{
-				ID:        NewRandomTaskID(),
-				Title:     strings.Join(c.Args(), " "),
-				CreatedAt: time.Now(),
-			},
-		},
-	}
-	if err = t.Task.Write(); err != nil {
-		log.Fatal(err)
-	}
-	if err = t.Link(DirPendingTasks); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func cmdList(c *cli.Context) {
-	tasks, err := AllTasks()
+	tasks, err := task.List()
 	if err != nil {
 		log.Fatal(err)
 	}
-	sort.Sort(ByCreatedAtDesc(tasks))
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetBorder(false)
 	table.SetHeaderLine(false)
@@ -103,7 +91,7 @@ func cmdList(c *cli.Context) {
 	table.SetAutoFormatHeaders(false)
 	table.SetHeader([]string{"ID", "Title"})
 	for _, v := range tasks {
-		table.Append([]string{v.ID.String(), v.Title})
+		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
 	}
 	table.Render()
 }

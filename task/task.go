@@ -1,4 +1,4 @@
-package main
+package task
 
 import (
 	"bufio"
@@ -11,17 +11,17 @@ import (
 
 const taskExt = ".task"
 
-// Task is a file stored in DirTasks.
+// Task is a file stored in dirTasks.
 type Task struct {
-	ID        TaskID
+	ID        uint32
 	Title     string
 	CreatedAt time.Time
 }
 
-// NewTaskFromFile parsed filename in dir as a Task.
-func NewTaskFromFile(dir, filename string) (t Task, err error) {
+// newTaskFromFile parsed filename in dir as a Task.
+func newTaskFromFile(dir, filename string) (t Task, err error) {
 	idStr := filename[:len(filename)-len(taskExt)]
-	t.ID, err = ParseTaskID(idStr)
+	t.ID, err = parseID(idStr)
 	if err != nil {
 		return
 	}
@@ -59,9 +59,9 @@ func NewTaskFromFile(dir, filename string) (t Task, err error) {
 	return
 }
 
-// Write the task to file at <DirTasks>/<ID>.task
-func (t Task) Write() error {
-	path := filepath.Join(DirTasks, t.ID.String()) + taskExt
+// write the task to file at <dirTasks>/<ID>.task
+func (t Task) write() error {
+	path := filepath.Join(dirTasks, formatID(t.ID)) + taskExt
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -78,9 +78,9 @@ func (t Task) Write() error {
 	return f.Close()
 }
 
-// AllTasks returns all tasks in DirTasks.
-func AllTasks() ([]Task, error) {
-	f, err := os.Open(DirTasks)
+// allTasks returns all tasks in dirTasks.
+func allTasks() ([]Task, error) {
+	f, err := os.Open(dirTasks)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func AllTasks() ([]Task, error) {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		t, err := NewTaskFromFile(DirTasks, name)
+		t, err := newTaskFromFile(dirTasks, name)
 		if err != nil {
 			return nil, err
 		}
@@ -102,9 +102,3 @@ func AllTasks() ([]Task, error) {
 	}
 	return tasks, nil
 }
-
-type ByCreatedAtDesc []Task
-
-func (t ByCreatedAtDesc) Len() int           { return len(t) }
-func (t ByCreatedAtDesc) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-func (t ByCreatedAtDesc) Less(i, j int) bool { return t[i].CreatedAt.After(t[j].CreatedAt) }

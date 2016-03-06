@@ -2,27 +2,20 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"os"
-	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/mitchellh/go-homedir"
 	"github.com/olekukonko/tablewriter"
-	"github.com/satori/go.uuid"
-)
-
-var (
-	yapHome           string
-	tasksDir          string
-	pendingTasksDir   string
-	completedTasksDir string
 )
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
@@ -37,29 +30,13 @@ func main() {
 	}
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:        "home",
-			Value:       "~/.yap",
-			Usage:       "home dir for yap",
-			Destination: &yapHome,
+			Name:  "home",
+			Value: DefaultYapHome,
+			Usage: "home dir for yap",
 		},
 	}
-	app.Before = func(c *cli.Context) (err error) {
-		if yapHome, err = homedir.Expand(c.GlobalString("home")); err != nil {
-			return
-		}
-		tasksDir = filepath.Join(yapHome, "tasks")
-		if err = os.MkdirAll(tasksDir, 0700); err != nil {
-			return
-		}
-		pendingTasksDir = filepath.Join(tasksDir, "pending")
-		if err = os.MkdirAll(pendingTasksDir, 0700); err != nil {
-			return
-		}
-		completedTasksDir = filepath.Join(tasksDir, "completed")
-		if err = os.MkdirAll(completedTasksDir, 0700); err != nil {
-			return
-		}
-		return
+	app.Before = func(c *cli.Context) error {
+		return SetHome(c.GlobalString("home"))
 	}
 	app.Action = cmdAdd // Default subcommand is "add".
 	app.Commands = []cli.Command{
@@ -70,9 +47,9 @@ func main() {
 			Action:  cmdAdd,
 		},
 		{
-			Name:    "list",
+			Name:    "pending",
 			Aliases: []string{"l"},
-			Usage:   "list tasks",
+			Usage:   "list pending tasks",
 			Action:  cmdList,
 		},
 		{
@@ -87,43 +64,47 @@ func main() {
 }
 
 func cmdAdd(c *cli.Context) {
+	// Since "add" is the default subcommand, we need to check if called with no args and show help.
 	if len(c.Args()) == 0 {
 		cli.ShowAppHelp(c)
 		return
 	}
-	id, err := NextTaskID(pendingTasksDir)
+	sid, err := NextTaskID(DirPendingTasks)
 	if err != nil {
 		log.Fatal(err)
 	}
 	t := PendingTask{
-		ID: id,
-		Task: Task{
-			UUID:      uuid.NewV1(),
-			Title:     strings.Join(c.Args(), " "),
-			CreatedAt: time.Now(),
+		TaskWithSmallID{
+			SmallID: sid,
+			Task: Task{
+				ID:        rand.Uint32(),
+				Title:     strings.Join(c.Args(), " "),
+				CreatedAt: time.Now(),
+			},
 		},
 	}
 	if err = t.Task.Write(); err != nil {
 		log.Fatal(err)
 	}
-	if err = t.Link(); err != nil {
+	if err = t.Link(DirPendingTasks); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func cmdList(c *cli.Context) {
-	tasks, err := ListTasks()
+	tasks, err := AllTasks()
 	if err != nil {
 		log.Fatal(err)
 	}
-	sort.Sort(byCreatedAtDesc(tasks))
+	sort.Sort(ByCreatedAtDesc(tasks))
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetBorder(false)
 	table.SetHeaderLine(false)
+	table.SetColumnSeparator("")
 	table.SetAutoFormatHeaders(false)
-	table.SetHeader([]string{"Title"})
+	table.SetHeader([]string{"ID", "Title"})
 	for _, v := range tasks {
-		table.Append([]string{v.Title})
+		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
 	}
 	table.Render()
 }

@@ -5,29 +5,28 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/satori/go.uuid"
 )
 
 const taskExt = ".task"
 
-// Task is a file stored in tasksDir.
-// UUID field is same with the filename of the task. Example: <tasksDir>/<UUID>.task
+// Task is a file stored in DirTasks.
 type Task struct {
-	UUID      uuid.UUID
+	ID        uint32
 	Title     string
 	CreatedAt time.Time
 }
 
 // NewTaskFromFile parsed filename in dir as a Task.
 func NewTaskFromFile(dir, filename string) (t Task, err error) {
-	uuidStr := filename[:len(filename)-len(taskExt)]
-	t.UUID, err = uuid.FromString(uuidStr)
+	idStr := filename[:len(filename)-len(taskExt)]
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		return
 	}
+	t.ID = uint32(id)
 	f, err := os.Open(filepath.Join(dir, filename))
 	if err != nil {
 		return
@@ -62,9 +61,9 @@ func NewTaskFromFile(dir, filename string) (t Task, err error) {
 	return
 }
 
-// Write the task to file at <tasksDir>/<UUID>.task
+// Write the task to file at <DirTasks>/<ID>.task
 func (t Task) Write() error {
-	path := filepath.Join(tasksDir, t.UUID.String()) + taskExt
+	path := filepath.Join(DirTasks, strconv.FormatUint(uint64(t.ID), 10)) + taskExt
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -81,9 +80,9 @@ func (t Task) Write() error {
 	return f.Close()
 }
 
-// ListTasks returns all tasks in tasksDir.
-func ListTasks() ([]Task, error) {
-	f, err := os.Open(tasksDir)
+// AllTasks returns all tasks in DirTasks.
+func AllTasks() ([]Task, error) {
+	f, err := os.Open(DirTasks)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +96,7 @@ func ListTasks() ([]Task, error) {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		t, err := NewTaskFromFile(tasksDir, name)
+		t, err := NewTaskFromFile(DirTasks, name)
 		if err != nil {
 			return nil, err
 		}
@@ -106,8 +105,8 @@ func ListTasks() ([]Task, error) {
 	return tasks, nil
 }
 
-type byCreatedAtDesc []Task
+type ByCreatedAtDesc []Task
 
-func (t byCreatedAtDesc) Len() int           { return len(t) }
-func (t byCreatedAtDesc) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-func (t byCreatedAtDesc) Less(i, j int) bool { return t[i].CreatedAt.After(t[j].CreatedAt) }
+func (t ByCreatedAtDesc) Len() int           { return len(t) }
+func (t ByCreatedAtDesc) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t ByCreatedAtDesc) Less(i, j int) bool { return t[i].CreatedAt.After(t[j].CreatedAt) }

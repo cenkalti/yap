@@ -18,14 +18,13 @@ type Task struct {
 	CreatedAt time.Time
 }
 
-// newTaskFromFile parsed filename in dir as a Task.
-func newTaskFromFile(dir, filename string) (t Task, err error) {
-	idStr := filename[:len(filename)-len(taskExt)]
-	t.ID, err = parseID(idStr)
+func newTaskFromFile(filename string) (t Task, err error) {
+	base := filepath.Base(filename)
+	t.ID, err = parseID(base[:len(base)-len(taskExt)])
 	if err != nil {
 		return
 	}
-	f, err := os.Open(filepath.Join(dir, filename))
+	f, err := os.Open(filename)
 	if err != nil {
 		return
 	}
@@ -98,7 +97,7 @@ func (Task) allTasks() ([]Task, error) {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		t, err := newTaskFromFile(dirTasks, name)
+		t, err := newTaskFromFile(filepath.Join(dirTasks, name))
 		if err != nil {
 			return nil, err
 		}

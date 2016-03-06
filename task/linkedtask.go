@@ -1,7 +1,6 @@
 package task
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,27 +30,15 @@ func tasksIn(dir string) ([]LinkedTask, error) {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		fullname := filepath.Join(dir, name)
-		fi, err := os.Lstat(fullname)
-		if err != nil {
-			return nil, err
-		}
-		if fi.Mode()&os.ModeSymlink == 0 {
-			return nil, errors.New("file is not symlink: " + fullname)
-		}
 		id, err := parseID(name[:len(name)-len(taskExt)])
 		if err != nil {
 			return nil, err
 		}
-		t, err := newTaskFromFile(dir, name)
+		ti, err := getLinkedTask(dir, id)
 		if err != nil {
 			return nil, err
 		}
-		ti := LinkedTask{
-			LinkID: id,
-			Task:   t,
-		}
-		tasks = append(tasks, ti)
+		tasks = append(tasks, *ti)
 	}
 	return tasks, nil
 }
@@ -67,4 +54,23 @@ func (t LinkedTask) link(dir string) error {
 func (t LinkedTask) unlink(dir string) error {
 	dst := filepath.Join(dir, formatID(t.LinkID)+taskExt)
 	return os.Remove(dst)
+}
+
+func getLinkedTask(dir string, id uint32) (*LinkedTask, error) {
+	filename, err := os.Readlink(filepath.Join(dir, formatID(id)+".task"))
+	if err != nil {
+		return nil, err
+	}
+	if !filepath.IsAbs(filename) {
+		filename = filepath.Join(dir, filename)
+	}
+	t, err := newTaskFromFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	lt := LinkedTask{
+		LinkID: id,
+		Task:   t,
+	}
+	return &lt, nil
 }

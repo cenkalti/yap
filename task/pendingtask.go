@@ -28,3 +28,14 @@ func pendingTasks() ([]PendingTask, error) {
 	}
 	return pendingTasks, nil
 }
+
+func getPendingTask(id uint32) (*PendingTask, error) {
+	lt, err := getLinkedTask(dirPendingTasks, id)
+	if err != nil {
+		return nil, err
+	}
+	t := PendingTask{
+		LinkedTask: *lt,
+	}
+	return &t, nil
+}

@@ -34,3 +34,12 @@ func List() ([]PendingTask, error) {
 	sort.Sort(pendingTasksByCreatedAtDesc(tasks))
 	return tasks, nil
 }
+
+// Complete pending task.
+func Complete(id uint32) error {
+	t, err := getPendingTask(id)
+	if err != nil {
+		return err
+	}
+	return t.Complete()
+}

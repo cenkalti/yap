@@ -50,9 +50,9 @@ func main() {
 			Action:  cmdAdd,
 		},
 		{
-			Name:    "pending",
+			Name:    "list",
 			Aliases: []string{"l"},
-			Usage:   "list pending tasks",
+			Usage:   "list tasks",
 			Action:  cmdList,
 		},
 		{
@@ -63,7 +63,10 @@ func main() {
 			},
 		},
 	}
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func cmdAdd(c *cli.Context) {

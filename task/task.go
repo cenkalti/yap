@@ -29,7 +29,7 @@ func newTaskFromFile(dir, filename string) (t Task, err error) {
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer checkClose(f)
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		text := strings.TrimSpace(scanner.Text())
@@ -67,8 +67,12 @@ func (t Task) write() error {
 		return err
 	}
 	w := bufio.NewWriter(f)
-	w.WriteString("title " + t.Title + "\n")
-	w.WriteString("created_at " + t.CreatedAt.Format(time.RFC3339Nano) + "\n")
+	if _, err = w.WriteString("title " + t.Title + "\n"); err != nil {
+		return err
+	}
+	if _, err = w.WriteString("created_at " + t.CreatedAt.Format(time.RFC3339Nano) + "\n"); err != nil {
+		return err
+	}
 	if err = w.Flush(); err != nil {
 		return err
 	}
@@ -79,12 +83,12 @@ func (t Task) write() error {
 }
 
 // allTasks returns all tasks in dirTasks.
-func allTasks() ([]Task, error) {
+func (Task) allTasks() ([]Task, error) {
 	f, err := os.Open(dirTasks)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer checkClose(f)
 	names, err := f.Readdirnames(-1)
 	if err != nil {
 		return nil, err

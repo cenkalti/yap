@@ -1,43 +1,55 @@
 package task
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-type linkedTask struct {
-	SmallID uint32
+// LinkedTask is a symlink to a Task for refering tasks with a more human-friendly ID number.
+// Task IDs are randomly generated unsigned 32-bit integers that is hard to remember and type.
+// LinkedTasks have separate IDs that is usually a small number.
+type LinkedTask struct {
+	LinkID uint32
 	Task
 }
 
 // tasksIn returns all tasks in dir.
-func tasksIn(dir string) ([]linkedTask, error) {
+func tasksIn(dir string) ([]LinkedTask, error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer checkClose(f)
 	names, err := f.Readdirnames(-1)
 	if err != nil {
 		return nil, err
 	}
-	var tasks []linkedTask
+	var tasks []LinkedTask
 	for _, name := range names {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		id, err := parseID(name)
+		fullname := filepath.Join(dir, name)
+		fi, err := os.Lstat(fullname)
 		if err != nil {
 			return nil, err
 		}
-		t, err := newTaskFromFile(dirTasks, name)
+		if fi.Mode()&os.ModeSymlink == 0 {
+			return nil, errors.New("file is not symlink: " + fullname)
+		}
+		id, err := parseID(name[:len(name)-len(taskExt)])
 		if err != nil {
 			return nil, err
 		}
-		ti := linkedTask{
-			SmallID: id,
-			Task:    t,
+		t, err := newTaskFromFile(dir, name)
+		if err != nil {
+			return nil, err
+		}
+		ti := LinkedTask{
+			LinkID: id,
+			Task:   t,
 		}
 		tasks = append(tasks, ti)
 	}
@@ -45,8 +57,14 @@ func tasksIn(dir string) ([]linkedTask, error) {
 }
 
 // link writes a symlink to dir that is pointing to original task in dirTasks.
-func (t linkedTask) link(dir string) error {
-	src := filepath.Join("..", formatID(t.ID)+taskExt)
-	dst := filepath.Join(dir, formatID(t.SmallID)+taskExt)
+func (t LinkedTask) link(dir string) error {
+	src := filepath.Join("..", "tasks", formatID(t.ID)+taskExt)
+	dst := filepath.Join(dir, formatID(t.LinkID)+taskExt)
 	return os.Symlink(src, dst)
+}
+
+// unlink removes the symlink in dir.
+func (t LinkedTask) unlink(dir string) error {
+	dst := filepath.Join(dir, formatID(t.LinkID)+taskExt)
+	return os.Remove(dst)
 }

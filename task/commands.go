@@ -11,14 +11,12 @@ func Add(title string) error {
 	if err != nil {
 		return err
 	}
-	t := PendingTask{
-		linkedTask{
-			SmallID: sid,
-			Task: Task{
-				ID:        randomID(),
-				Title:     title,
-				CreatedAt: time.Now(),
-			},
+	t := LinkedTask{
+		LinkID: sid,
+		Task: Task{
+			ID:        randomID(),
+			Title:     title,
+			CreatedAt: time.Now(),
 		},
 	}
 	if err = t.Task.write(); err != nil {
@@ -28,11 +26,11 @@ func Add(title string) error {
 }
 
 // List all pending tasks.
-func List() ([]Task, error) {
-	tasks, err := allTasks()
+func List() ([]PendingTask, error) {
+	tasks, err := pendingTasks()
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(byCreatedAtDesc(tasks))
+	sort.Sort(pendingTasksByCreatedAtDesc(tasks))
 	return tasks, nil
 }

@@ -13,7 +13,7 @@ func parseID(s string) (uint32, error) {
 }
 
 func randomID() uint32 {
-	return uint32(rand.Uint32())
+	return rand.Uint32()
 }
 
 func formatID(i uint32) string {
@@ -26,7 +26,7 @@ func nextID(dir string) (id uint32, err error) {
 	if err != nil {
 		return
 	}
-	defer f.Close()
+	defer checkClose(f)
 	names, err := f.Readdirnames(-1)
 	if err != nil {
 		return

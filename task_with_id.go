@@ -68,9 +68,9 @@ func NextTaskID(dir string) (id TaskID, err error) {
 			continue
 		}
 		strID := name[:len(name)-len(taskExt)]
-		id, err := ParseTaskID(strID)
+		id, err = ParseTaskID(strID)
 		if err != nil {
-			return 0, err
+			return
 		}
 		ids[id] = struct{}{}
 	}

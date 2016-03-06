@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -14,7 +13,7 @@ const taskExt = ".task"
 
 // Task is a file stored in DirTasks.
 type Task struct {
-	ID        uint32
+	ID        TaskID
 	Title     string
 	CreatedAt time.Time
 }
@@ -22,11 +21,10 @@ type Task struct {
 // NewTaskFromFile parsed filename in dir as a Task.
 func NewTaskFromFile(dir, filename string) (t Task, err error) {
 	idStr := filename[:len(filename)-len(taskExt)]
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	t.ID, err = ParseTaskID(idStr)
 	if err != nil {
 		return
 	}
-	t.ID = uint32(id)
 	f, err := os.Open(filepath.Join(dir, filename))
 	if err != nil {
 		return
@@ -63,7 +61,7 @@ func NewTaskFromFile(dir, filename string) (t Task, err error) {
 
 // Write the task to file at <DirTasks>/<ID>.task
 func (t Task) Write() error {
-	path := filepath.Join(DirTasks, strconv.FormatUint(uint64(t.ID), 10)) + taskExt
+	path := filepath.Join(DirTasks, t.ID.String()) + taskExt
 	f, err := os.Create(path)
 	if err != nil {
 		return err

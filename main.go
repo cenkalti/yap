@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -77,7 +76,7 @@ func cmdAdd(c *cli.Context) {
 		TaskWithSmallID{
 			SmallID: sid,
 			Task: Task{
-				ID:        rand.Uint32(),
+				ID:        NewRandomTaskID(),
 				Title:     strings.Join(c.Args(), " "),
 				CreatedAt: time.Now(),
 			},
@@ -104,7 +103,7 @@ func cmdList(c *cli.Context) {
 	table.SetAutoFormatHeaders(false)
 	table.SetHeader([]string{"ID", "Title"})
 	for _, v := range tasks {
-		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
+		table.Append([]string{v.ID.String(), v.Title})
 	}
 	table.Render()
 }

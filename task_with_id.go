@@ -3,12 +3,11 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
 type TaskWithSmallID struct {
-	SmallID uint32
+	SmallID TaskID
 	Task
 }
 
@@ -28,7 +27,7 @@ func TasksIn(dir string) ([]TaskWithSmallID, error) {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		id, err := strconv.ParseUint(name, 10, 32)
+		id, err := ParseTaskID(name)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +36,7 @@ func TasksIn(dir string) ([]TaskWithSmallID, error) {
 			return nil, err
 		}
 		ti := TaskWithSmallID{
-			SmallID: uint32(id),
+			SmallID: id,
 			Task:    t,
 		}
 		tasks = append(tasks, ti)
@@ -47,13 +46,13 @@ func TasksIn(dir string) ([]TaskWithSmallID, error) {
 
 // Link writes a symlink to dir that is pointing to original task in DirTasks.
 func (t TaskWithSmallID) Link(dir string) error {
-	src := filepath.Join("..", strconv.FormatUint(uint64(t.ID), 10)+taskExt)
-	dst := filepath.Join(dir, strconv.FormatUint(uint64(t.SmallID), 10)+taskExt)
+	src := filepath.Join("..", t.ID.String()+taskExt)
+	dst := filepath.Join(dir, t.SmallID.String()+taskExt)
 	return os.Symlink(src, dst)
 }
 
 // NextTaskID returns the minimum available integer id in dir.
-func NextTaskID(dir string) (id uint32, err error) {
+func NextTaskID(dir string) (id TaskID, err error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return
@@ -63,17 +62,16 @@ func NextTaskID(dir string) (id uint32, err error) {
 	if err != nil {
 		return
 	}
-	ids := make(map[uint32]struct{})
+	ids := make(map[TaskID]struct{})
 	for _, name := range names {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
 		strID := name[:len(name)-len(taskExt)]
-		uid, err := strconv.ParseUint(strID, 10, 32)
+		id, err := ParseTaskID(strID)
 		if err != nil {
 			return 0, err
 		}
-		id := uint32(uid)
 		ids[id] = struct{}{}
 	}
 	for id = 1; ; id++ {

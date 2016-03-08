@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -75,10 +76,11 @@ func cmdAdd(c *cli.Context) {
 		return
 	}
 	title := strings.Join(c.Args(), " ")
-	err := task.Add(title)
+	pt, err := task.Add(title)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("id:", pt.LinkID)
 }
 
 func cmdList(c *cli.Context) {

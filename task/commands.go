@@ -6,23 +6,25 @@ import (
 )
 
 // Add new task in pending state.
-func Add(title string) error {
+func Add(title string) (*PendingTask, error) {
 	sid, err := nextID(dirPendingTasks)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	t := LinkedTask{
-		LinkID: sid,
-		Task: Task{
-			ID:        randomID(),
-			Title:     title,
-			CreatedAt: time.Now(),
+	pt := PendingTask{
+		LinkedTask: LinkedTask{
+			LinkID: sid,
+			Task: Task{
+				ID:        randomID(),
+				Title:     title,
+				CreatedAt: time.Now(),
+			},
 		},
 	}
-	if err = t.Task.write(); err != nil {
-		return err
+	if err = pt.write(); err != nil {
+		return nil, err
 	}
-	return t.link(dirPendingTasks)
+	return &pt, pt.link(dirPendingTasks)
 }
 
 // List all pending tasks.

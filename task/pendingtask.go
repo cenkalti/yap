@@ -7,11 +7,7 @@ type PendingTask struct {
 
 // Complete the task.
 func (t *PendingTask) Complete() error {
-	err := t.LinkedTask.link(dirCompletedTasks)
-	if err != nil {
-		return err
-	}
-	return t.LinkedTask.unlink(dirPendingTasks)
+	return t.LinkedTask.move(dirPendingTasks, dirCompletedTasks)
 }
 
 func pendingTasks() ([]PendingTask, error) {

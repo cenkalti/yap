@@ -56,6 +56,21 @@ func (t LinkedTask) unlink(dir string) error {
 	return os.Remove(dst)
 }
 
+func (t *LinkedTask) move(olddir, newdir string) error {
+	id, err := nextID(newdir)
+	if err != nil {
+		return err
+	}
+	oldpath := filepath.Join(olddir, formatID(t.LinkID)+taskExt)
+	newpath := filepath.Join(newdir, formatID(id)+taskExt)
+	err = os.Rename(oldpath, newpath)
+	if err != nil {
+		return err
+	}
+	t.LinkID = id
+	return nil
+}
+
 func getLinkedTask(dir string, id uint32) (*LinkedTask, error) {
 	filename, err := os.Readlink(filepath.Join(dir, formatID(id)+".task"))
 	if err != nil {

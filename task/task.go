@@ -13,6 +13,7 @@ const taskExt = ".task"
 
 // Task is a file stored in dirTasks.
 type Task struct {
+	// Randomly generated unique ID.
 	ID        uint32
 	Title     string
 	CreatedAt time.Time

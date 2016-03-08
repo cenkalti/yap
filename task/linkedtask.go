@@ -7,7 +7,7 @@ import (
 )
 
 // LinkedTask is a symlink to a Task for refering tasks with a more human-friendly ID number.
-// Task IDs are randomly generated unsigned 32-bit integers that is hard to remember and type.
+// Task IDs are random 32-bit integers that is hard to remember and type.
 // LinkedTasks have separate IDs that is usually a small number.
 type LinkedTask struct {
 	LinkID uint32

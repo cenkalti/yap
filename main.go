@@ -54,13 +54,33 @@ func main() {
 			Name:    "list",
 			Aliases: []string{"l"},
 			Usage:   "list tasks",
-			Action:  cmdList,
+			Action:  cmdListPending,
+			Subcommands: []cli.Command{
+				{
+					Name:    "pending",
+					Aliases: []string{"p"},
+					Usage:   "list pending tasks",
+					Action:  cmdListPending,
+				},
+				{
+					Name:    "completed",
+					Aliases: []string{"c"},
+					Usage:   "list completed tasks",
+					Action:  cmdListCompleted,
+				},
+			},
 		},
 		{
 			Name:    "complete",
 			Aliases: []string{"c"},
 			Usage:   "complete a task",
 			Action:  cmdComplete,
+		},
+		{
+			Name:    "continue",
+			Aliases: []string{"con"},
+			Usage:   "continue a completed task",
+			Action:  cmdContinue,
 		},
 	}
 	err := app.Run(os.Args)
@@ -83,17 +103,24 @@ func cmdAdd(c *cli.Context) {
 	fmt.Println("id:", pt.LinkID)
 }
 
-func cmdList(c *cli.Context) {
-	tasks, err := task.List()
+func cmdListPending(c *cli.Context) {
+	tasks, err := task.ListPending()
 	if err != nil {
 		log.Fatal(err)
 	}
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetBorder(false)
-	table.SetHeaderLine(false)
-	table.SetColumnSeparator("")
-	table.SetAutoFormatHeaders(false)
-	table.SetHeader([]string{"ID", "Title"})
+	table := newTable("ID", "Title")
+	for _, v := range tasks {
+		table.Append([]string{strconv.FormatUint(uint64(v.LinkID), 10), v.Title})
+	}
+	table.Render()
+}
+
+func cmdListCompleted(c *cli.Context) {
+	tasks, err := task.ListCompleted()
+	if err != nil {
+		log.Fatal(err)
+	}
+	table := newTable("ID", "Title")
 	for _, v := range tasks {
 		table.Append([]string{strconv.FormatUint(uint64(v.LinkID), 10), v.Title})
 	}
@@ -111,4 +138,27 @@ func cmdComplete(c *cli.Context) {
 			log.Fatal(err)
 		}
 	}
+}
+
+func cmdContinue(c *cli.Context) {
+	for _, arg := range c.Args() {
+		id, err := strconv.ParseUint(arg, 10, 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+		err = task.Continue(uint32(id))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func newTable(fields ...string) *tablewriter.Table {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetBorder(false)
+	table.SetHeaderLine(false)
+	table.SetColumnSeparator("")
+	table.SetAutoFormatHeaders(false)
+	table.SetHeader(fields)
+	return table
 }

@@ -14,9 +14,10 @@ const taskExt = ".task"
 // Task is a file stored in dirTasks.
 type Task struct {
 	// Randomly generated unique ID.
-	ID        uint32
-	Title     string
-	CreatedAt time.Time
+	ID          uint32
+	Title       string
+	CreatedAt   time.Time
+	CompletedAt *time.Time
 }
 
 func newTaskFromFile(filename string) (t Task, err error) {
@@ -41,21 +42,34 @@ func newTaskFromFile(filename string) (t Task, err error) {
 			err = errors.New("invalid task file")
 			return
 		}
-		key, value := parts[0], parts[1]
-		switch key {
-		case "title":
-			t.Title = value
-		case "created_at":
-			t.CreatedAt, err = time.Parse(time.RFC3339Nano, value)
-			if err != nil {
-				return
-			}
-		default:
-			err = errors.New("invalid key")
+		err = t.setKeyVal(parts[0], parts[1])
+		if err != nil {
 			return
 		}
 	}
 	err = scanner.Err()
+	return
+}
+
+func (t *Task) setKeyVal(key, value string) (err error) {
+	switch key {
+	case "title":
+		t.Title = value
+	case "created_at":
+		t.CreatedAt, err = time.Parse(time.RFC3339Nano, value)
+		if err != nil {
+			return
+		}
+	case "completed_at":
+		var ctime time.Time
+		ctime, err = time.Parse(time.RFC3339Nano, value)
+		if err != nil {
+			return
+		}
+		t.CompletedAt = &ctime
+	default:
+		err = errors.New("invalid key")
+	}
 	return
 }
 
@@ -72,6 +86,11 @@ func (t Task) write() error {
 	}
 	if _, err = w.WriteString("created_at " + t.CreatedAt.Format(time.RFC3339Nano) + "\n"); err != nil {
 		return err
+	}
+	if t.CompletedAt != nil {
+		if _, err = w.WriteString("completed_at " + t.CompletedAt.Format(time.RFC3339Nano) + "\n"); err != nil {
+			return err
+		}
 	}
 	if err = w.Flush(); err != nil {
 		return err

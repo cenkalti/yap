@@ -27,13 +27,23 @@ func Add(title string) (*PendingTask, error) {
 	return &pt, pt.link(dirPendingTasks)
 }
 
-// List all pending tasks.
-func List() ([]PendingTask, error) {
+// ListPending all pending tasks.
+func ListPending() ([]PendingTask, error) {
 	tasks, err := pendingTasks()
 	if err != nil {
 		return nil, err
 	}
 	sort.Sort(pendingTasksByCreatedAtDesc(tasks))
+	return tasks, nil
+}
+
+// ListCompleted all completed tasks.
+func ListCompleted() ([]CompletedTask, error) {
+	tasks, err := completedTasks()
+	if err != nil {
+		return nil, err
+	}
+	sort.Sort(completedTasksByCompletedAtDesc(tasks))
 	return tasks, nil
 }
 
@@ -44,4 +54,13 @@ func Complete(id uint32) error {
 		return err
 	}
 	return t.Complete()
+}
+
+// Continue completed task.
+func Continue(id uint32) error {
+	t, err := getCompletedTask(id)
+	if err != nil {
+		return err
+	}
+	return t.Continue()
 }

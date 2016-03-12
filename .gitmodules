@@ -1,12 +1,12 @@
 [submodule "vendor/github.com/satori/go.uuid"]
 	path = vendor/github.com/satori/go.uuid
-	url = git@github.com:satori/go.uuid.git
+	url = https://github.com/satori/go.uuid.git
 [submodule "vendor/github.com/mitchellh/go-homedir"]
 	path = vendor/github.com/mitchellh/go-homedir
-	url = git@github.com:mitchellh/go-homedir
+	url = https://github.com/mitchellh/go-homedir
 [submodule "vendor/github.com/codegangsta/cli"]
 	path = vendor/github.com/codegangsta/cli
-	url = git@github.com:codegangsta/cli
+	url = https://github.com/codegangsta/cli
 [submodule "vendor/github.com/olekukonko/tablewriter"]
 	path = vendor/github.com/olekukonko/tablewriter
 	url = https://github.com/olekukonko/tablewriter

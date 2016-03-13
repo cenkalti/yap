@@ -4,21 +4,19 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
 	"github.com/mitchellh/go-homedir"
 	"github.com/olekukonko/tablewriter"
-	"github.com/theckman/go-flock"
 )
 
 // DefaultYapHome is the directory where yap keeps all task and configuration files.
 const DefaultYapHome = "~/.yap"
-
-var instanceLock *flock.Flock
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -41,30 +39,25 @@ func main() {
 			Usage: "home dir for yap",
 		},
 	}
-	app.Before = func(c *cli.Context) error {
+	app.Before = func(c *cli.Context) (err error) {
 		home := c.GlobalString("home")
-		var err error
 		home, err = homedir.Expand(home)
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
 		err = task.SetHome(home)
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
-		lockPath := filepath.Join(home, ".lock")
-		instanceLock = flock.NewFlock(lockPath)
-		locked, err := instanceLock.TryLock()
+		fd, err := syscall.Open(home, 0, 0)
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
-		if !locked {
-			log.Fatal("another instance is running")
+		err = syscall.Flock(fd, syscall.LOCK_EX|syscall.LOCK_NB)
+		if err != nil {
+			log.Fatal(err)
 		}
-		return nil
-	}
-	app.After = func(c *cli.Context) error {
-		return os.Remove(instanceLock.Path())
+		return
 	}
 	app.Action = cmdAdd // Default subcommand is "add".
 	app.Commands = []cli.Command{

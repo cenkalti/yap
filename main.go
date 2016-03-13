@@ -3,12 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
@@ -24,7 +22,6 @@ var instanceLock *flock.Flock
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {

@@ -1,7 +1,6 @@
 package task
 
 import (
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -10,10 +9,6 @@ import (
 func parseID(s string) (uint32, error) {
 	i, err := strconv.ParseUint(s, 10, 32)
 	return uint32(i), err
-}
-
-func randomID() uint32 {
-	return rand.Uint32()
 }
 
 func formatID(i uint32) string {

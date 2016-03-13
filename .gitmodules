@@ -10,9 +10,6 @@
 [submodule "vendor/github.com/mattn/go-runewidth"]
 	path = vendor/github.com/mattn/go-runewidth
 	url = https://github.com/mattn/go-runewidth
-[submodule "vendor/github.com/theckman/go-flock"]
-	path = vendor/github.com/theckman/go-flock
-	url = https://github.com/theckman/go-flock
 [submodule "vendor/github.com/satori/go.uuid"]
 	path = vendor/github.com/satori/go.uuid
 	url = https://github.com/satori/go.uuid

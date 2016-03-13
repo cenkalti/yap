@@ -10,7 +10,7 @@ import (
 // Task IDs are random 32-bit integers that is hard to remember and type.
 // LinkedTasks have separate IDs that is usually a small number.
 type LinkedTask struct {
-	LinkID uint32
+	LinkID uint16
 	Task
 }
 
@@ -71,7 +71,7 @@ func (t *LinkedTask) move(olddir, newdir string) error {
 	return nil
 }
 
-func getLinkedTask(dir string, id uint32) (*LinkedTask, error) {
+func getLinkedTask(dir string, id uint16) (*LinkedTask, error) {
 	filename, err := os.Readlink(filepath.Join(dir, formatID(id)+".task"))
 	if err != nil {
 		return nil, err

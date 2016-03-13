@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-func parseID(s string) (uint32, error) {
-	i, err := strconv.ParseUint(s, 10, 32)
-	return uint32(i), err
+func parseID(s string) (uint16, error) {
+	i, err := strconv.ParseUint(s, 10, 16)
+	return uint16(i), err
 }
 
-func formatID(i uint32) string {
+func formatID(i uint16) string {
 	return strconv.FormatUint(uint64(i), 10)
 }
 
-// nextID returns the minimum available uint32 in dir.
-func nextID(dir string) (id uint32, err error) {
+// nextID returns the minimum available uint16 in dir.
+func nextID(dir string) (id uint16, err error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return
@@ -26,7 +26,7 @@ func nextID(dir string) (id uint32, err error) {
 	if err != nil {
 		return
 	}
-	ids := make(map[uint32]struct{})
+	ids := make(map[uint16]struct{})
 	for _, name := range names {
 		if !strings.HasSuffix(name, taskExt) {
 			continue

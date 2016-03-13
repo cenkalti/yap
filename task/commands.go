@@ -50,7 +50,7 @@ func ListCompleted() ([]CompletedTask, error) {
 }
 
 // Complete pending task.
-func Complete(id uint32) error {
+func Complete(id uint16) error {
 	t, err := getPendingTask(id)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func Complete(id uint32) error {
 }
 
 // Continue completed task.
-func Continue(id uint32) error {
+func Continue(id uint16) error {
 	t, err := getCompletedTask(id)
 	if err != nil {
 		return err

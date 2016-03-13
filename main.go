@@ -152,11 +152,11 @@ func cmdListCompleted(c *cli.Context) {
 
 func cmdComplete(c *cli.Context) {
 	for _, arg := range c.Args() {
-		id, err := strconv.ParseUint(arg, 10, 32)
+		id, err := strconv.ParseUint(arg, 10, 16)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = task.Complete(uint32(id))
+		err = task.Complete(uint16(id))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -165,11 +165,11 @@ func cmdComplete(c *cli.Context) {
 
 func cmdContinue(c *cli.Context) {
 	for _, arg := range c.Args() {
-		id, err := strconv.ParseUint(arg, 10, 32)
+		id, err := strconv.ParseUint(arg, 10, 16)
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = task.Continue(uint32(id))
+		err = task.Continue(uint16(id))
 		if err != nil {
 			log.Fatal(err)
 		}

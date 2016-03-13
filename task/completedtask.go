@@ -25,7 +25,7 @@ func completedTasks() ([]CompletedTask, error) {
 	return completedTasks, nil
 }
 
-func getCompletedTask(id uint32) (*CompletedTask, error) {
+func getCompletedTask(id uint16) (*CompletedTask, error) {
 	lt, err := getLinkedTask(dirCompletedTasks, id)
 	if err != nil {
 		return nil, err

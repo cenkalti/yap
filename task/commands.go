@@ -9,24 +9,26 @@ import (
 
 // Add new task in pending state.
 func Add(title string) (*PendingTask, error) {
-	sid, err := nextID(dirPendingTasks)
+	id, err := nextID(dirPendingTasks)
 	if err != nil {
 		return nil, err
 	}
 	pt := PendingTask{
-		LinkedTask: LinkedTask{
-			LinkID: sid,
-			Task: Task{
-				UUID:      uuid.NewV4(),
-				Title:     title,
-				CreatedAt: time.Now(),
-			},
+		ID: id,
+		Task: Task{
+			UUID:      uuid.NewV4(),
+			Title:     title,
+			CreatedAt: time.Now(),
 		},
 	}
 	if err = pt.write(); err != nil {
 		return nil, err
 	}
-	return &pt, pt.link(dirPendingTasks)
+	lt := &linkedTask{
+		LinkID: pt.ID,
+		Task:   pt.Task,
+	}
+	return &pt, lt.link(dirPendingTasks)
 }
 
 // ListPending all pending tasks.

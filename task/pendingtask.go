@@ -2,12 +2,17 @@ package task
 
 // PendingTask is a Task that is not completed yet.
 type PendingTask struct {
-	LinkedTask
+	ID uint16
+	Task
 }
 
 // Complete the task.
 func (t *PendingTask) Complete() error {
-	return t.LinkedTask.move(dirPendingTasks, dirCompletedTasks)
+	lt := &linkedTask{
+		LinkID: t.ID,
+		Task:   t.Task,
+	}
+	return lt.move(dirPendingTasks, dirCompletedTasks)
 }
 
 func pendingTasks() ([]PendingTask, error) {
@@ -18,7 +23,8 @@ func pendingTasks() ([]PendingTask, error) {
 	pendingTasks := make([]PendingTask, 0, len(linkedTasks))
 	for _, lt := range linkedTasks {
 		t := PendingTask{
-			LinkedTask: lt,
+			ID:   lt.LinkID,
+			Task: lt.Task,
 		}
 		pendingTasks = append(pendingTasks, t)
 	}
@@ -31,7 +37,8 @@ func getPendingTask(id uint16) (*PendingTask, error) {
 		return nil, err
 	}
 	t := PendingTask{
-		LinkedTask: *lt,
+		ID:   lt.LinkID,
+		Task: lt.Task,
 	}
 	return &t, nil
 }

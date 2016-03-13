@@ -123,7 +123,7 @@ func cmdAdd(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("id:", pt.LinkID)
+	fmt.Println("id:", pt.ID)
 }
 
 func cmdListPending(c *cli.Context) {
@@ -133,7 +133,7 @@ func cmdListPending(c *cli.Context) {
 	}
 	table := newTable("ID", "Title")
 	for _, v := range tasks {
-		table.Append([]string{strconv.FormatUint(uint64(v.LinkID), 10), v.Title})
+		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
 	}
 	table.Render()
 }
@@ -145,7 +145,7 @@ func cmdListCompleted(c *cli.Context) {
 	}
 	table := newTable("ID", "Title")
 	for _, v := range tasks {
-		table.Append([]string{strconv.FormatUint(uint64(v.LinkID), 10), v.Title})
+		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
 	}
 	table.Render()
 }

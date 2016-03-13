@@ -7,14 +7,15 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/satori/go.uuid"
 )
 
 const taskExt = ".task"
 
 // Task is a file stored in dirTasks.
 type Task struct {
-	// Randomly generated unique ID.
-	ID          uint32
+	UUID        uuid.UUID
 	Title       string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
@@ -22,7 +23,7 @@ type Task struct {
 
 func newTaskFromFile(filename string) (t Task, err error) {
 	base := filepath.Base(filename)
-	t.ID, err = parseID(base[:len(base)-len(taskExt)])
+	t.UUID, err = uuid.FromString(base[:len(base)-len(taskExt)])
 	if err != nil {
 		return
 	}
@@ -75,7 +76,7 @@ func (t *Task) setKeyVal(key, value string) (err error) {
 
 // write the task to file at <dirTasks>/<ID>.task
 func (t Task) write() error {
-	path := filepath.Join(dirTasks, formatID(t.ID)) + taskExt
+	path := filepath.Join(dirTasks, t.UUID.String()) + taskExt
 	f, err := os.Create(path)
 	if err != nil {
 		return err

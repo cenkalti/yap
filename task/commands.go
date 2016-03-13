@@ -3,6 +3,8 @@ package task
 import (
 	"sort"
 	"time"
+
+	"github.com/satori/go.uuid"
 )
 
 // Add new task in pending state.
@@ -15,7 +17,7 @@ func Add(title string) (*PendingTask, error) {
 		LinkedTask: LinkedTask{
 			LinkID: sid,
 			Task: Task{
-				ID:        randomID(),
+				UUID:      uuid.NewV4(),
 				Title:     title,
 				CreatedAt: time.Now(),
 			},

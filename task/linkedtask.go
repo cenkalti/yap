@@ -45,7 +45,7 @@ func tasksIn(dir string) ([]LinkedTask, error) {
 
 // link writes a symlink to dir that is pointing to original task in dirTasks.
 func (t LinkedTask) link(dir string) error {
-	src := filepath.Join("..", "tasks", formatID(t.ID)+taskExt)
+	src := filepath.Join("..", "tasks", t.UUID.String()+taskExt)
 	dst := filepath.Join(dir, formatID(t.LinkID)+taskExt)
 	return os.Symlink(src, dst)
 }

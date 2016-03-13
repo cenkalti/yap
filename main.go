@@ -5,17 +5,22 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
+	"github.com/mitchellh/go-homedir"
 	"github.com/olekukonko/tablewriter"
+	"github.com/theckman/go-flock"
 )
 
 // DefaultYapHome is the directory where yap keeps all task and configuration files.
 const DefaultYapHome = "~/.yap"
+
+var instanceLock *flock.Flock
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -40,7 +45,29 @@ func main() {
 		},
 	}
 	app.Before = func(c *cli.Context) error {
-		return task.SetHome(c.GlobalString("home"))
+		home := c.GlobalString("home")
+		var err error
+		home, err = homedir.Expand(home)
+		if err != nil {
+			return err
+		}
+		err = task.SetHome(home)
+		if err != nil {
+			return err
+		}
+		lockPath := filepath.Join(home, ".lock")
+		instanceLock = flock.NewFlock(lockPath)
+		locked, err := instanceLock.TryLock()
+		if err != nil {
+			return err
+		}
+		if !locked {
+			log.Fatal("another instance is running")
+		}
+		return nil
+	}
+	app.After = func(c *cli.Context) error {
+		return os.Remove(instanceLock.Path())
 	}
 	app.Action = cmdAdd // Default subcommand is "add".
 	app.Commands = []cli.Command{
@@ -54,7 +81,6 @@ func main() {
 			Name:    "list",
 			Aliases: []string{"l"},
 			Usage:   "list tasks",
-			Action:  cmdListPending,
 			Subcommands: []cli.Command{
 				{
 					Name:    "pending",

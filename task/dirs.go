@@ -3,8 +3,6 @@ package task
 import (
 	"os"
 	"path/filepath"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -16,9 +14,6 @@ var (
 // SetHome creates task directories under yap home.
 // User must call this function with yap home directory before using this package.
 func SetHome(home string) (err error) {
-	if home, err = homedir.Expand(home); err != nil {
-		return
-	}
 	dirTasks = filepath.Join(home, "tasks")
 	if err = os.MkdirAll(dirTasks, 0700); err != nil {
 		return

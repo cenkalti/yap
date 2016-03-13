@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"

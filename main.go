@@ -123,29 +123,37 @@ func cmdListCompleted(c *cli.Context) {
 }
 
 func cmdComplete(c *cli.Context) {
-	for _, arg := range c.Args() {
-		id, err := strconv.ParseUint(arg, 10, 16)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = task.Complete(uint16(id))
-		if err != nil {
-			log.Fatal(err)
-		}
+	ids, err := parseIDs(c.Args())
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = task.Complete(ids)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
 func cmdContinue(c *cli.Context) {
-	for _, arg := range c.Args() {
+	ids, err := parseIDs(c.Args())
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = task.Continue(ids)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func parseIDs(args []string) ([]uint16, error) {
+	ids := make([]uint16, 0, len(args))
+	for _, arg := range args {
 		id, err := strconv.ParseUint(arg, 10, 16)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
-		err = task.Continue(uint16(id))
-		if err != nil {
-			log.Fatal(err)
-		}
+		ids = append(ids, uint16(id))
 	}
+	return ids, nil
 }
 
 func newTable(fields ...string) *tablewriter.Table {

@@ -10,12 +10,8 @@ import (
 
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
-	"github.com/mitchellh/go-homedir"
 	"github.com/olekukonko/tablewriter"
 )
-
-// DefaultYapHome is the directory where yap keeps all task and configuration files.
-const DefaultYapHome = "~/.yap"
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -31,24 +27,8 @@ func main() {
 			Email: "cenkalti@gmail.com",
 		},
 	}
-	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "home",
-			Value: DefaultYapHome,
-			Usage: "home dir for yap",
-		},
-	}
 	app.Before = func(c *cli.Context) (err error) {
-		home := c.GlobalString("home")
-		home, err = homedir.Expand(home)
-		if err != nil {
-			log.Fatal(err)
-		}
-		err = task.SetHome(home)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fd, err := syscall.Open(home, 0, 0)
+		fd, err := syscall.Open(task.Home, 0, 0)
 		if err != nil {
 			log.Fatal(err)
 		}

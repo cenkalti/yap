@@ -1,13 +1,14 @@
 package task
 
 // PendingTask is a Task that is not completed yet.
+// Pending tasks are stored in pending-tasks dir as symlink to original file in tasks dir.
 type PendingTask struct {
 	ID uint16
 	Task
 }
 
-// Complete the task.
-func (t *PendingTask) Complete() error {
+// complete the task.
+func (t *PendingTask) complete() error {
 	lt := &linkedTask{
 		LinkID: t.ID,
 		Task:   t.Task,

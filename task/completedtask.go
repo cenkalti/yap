@@ -1,13 +1,14 @@
 package task
 
 // CompletedTask is a Task that is completed.
+// Completed tasks are stored in completed-tasks dir as symlink to original file in tasks dir.
 type CompletedTask struct {
 	ID uint16
 	Task
 }
 
-// Continue completed task.
-func (t *CompletedTask) Continue() error {
+// continue completed task.
+func (t *CompletedTask) continueTask() error {
 	lt := &linkedTask{
 		LinkID: t.ID,
 		Task:   t.Task,

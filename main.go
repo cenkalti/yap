@@ -119,11 +119,11 @@ func cmdAdd(c *cli.Context) {
 		return
 	}
 	title := strings.Join(c.Args(), " ")
-	pt, err := task.Add(title)
+	id, err := task.Add(title)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("id:", pt.ID)
+	fmt.Println("id:", id)
 }
 
 func cmdListPending(c *cli.Context) {

@@ -13,7 +13,7 @@ import (
 
 const taskExt = ".task"
 
-// Task is a file stored in dirTasks.
+// Task is a file stored in tasks dir.
 type Task struct {
 	UUID        uuid.UUID
 	Title       string

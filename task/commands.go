@@ -8,10 +8,10 @@ import (
 )
 
 // Add new task in pending state.
-func Add(title string) (*PendingTask, error) {
-	id, err := nextID(dirPendingTasks)
+func Add(title string) (id uint16, err error) {
+	id, err = nextID(dirPendingTasks)
 	if err != nil {
-		return nil, err
+		return
 	}
 	pt := PendingTask{
 		ID: id,
@@ -22,16 +22,17 @@ func Add(title string) (*PendingTask, error) {
 		},
 	}
 	if err = pt.write(); err != nil {
-		return nil, err
+		return
 	}
 	lt := &linkedTask{
 		LinkID: pt.ID,
 		Task:   pt.Task,
 	}
-	return &pt, lt.link(dirPendingTasks)
+	err = lt.link(dirPendingTasks)
+	return
 }
 
-// ListPending all pending tasks.
+// ListPending returns all pending tasks.
 func ListPending() ([]PendingTask, error) {
 	tasks, err := pendingTasks()
 	if err != nil {
@@ -41,7 +42,7 @@ func ListPending() ([]PendingTask, error) {
 	return tasks, nil
 }
 
-// ListCompleted all completed tasks.
+// ListCompleted returns all completed tasks.
 func ListCompleted() ([]CompletedTask, error) {
 	tasks, err := completedTasks()
 	if err != nil {
@@ -57,7 +58,7 @@ func Complete(id uint16) error {
 	if err != nil {
 		return err
 	}
-	return t.Complete()
+	return t.complete()
 }
 
 // Continue completed task.
@@ -66,5 +67,5 @@ func Continue(id uint16) error {
 	if err != nil {
 		return err
 	}
-	return t.Continue()
+	return t.continueTask()
 }

@@ -9,16 +9,17 @@ import (
 )
 
 var (
-	Home              string
+	// Home is the directory for storing task files and settings.
+	// Home can be overriden with YAP_HOME environment variable.
+	Home              = "~/.yap"
 	dirTasks          string
 	dirPendingTasks   string
 	dirCompletedTasks string
 )
 
 func init() {
-	Home = os.Getenv("YAP_HOME")
-	if Home == "" {
-		Home = "~/.yap"
+	if yh := os.Getenv("YAP_HOME"); yh != "" {
+		Home = yh
 	}
 	var err error
 	Home, err = homedir.Expand(Home)

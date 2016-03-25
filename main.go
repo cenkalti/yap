@@ -68,13 +68,13 @@ func main() {
 		{
 			Name:    "complete",
 			Aliases: []string{"c"},
-			Usage:   "complete a task",
+			Usage:   "complete pending task",
 			Action:  cmdComplete,
 		},
 		{
 			Name:    "continue",
 			Aliases: []string{"con"},
-			Usage:   "continue a completed task",
+			Usage:   "continue completed task",
 			Action:  cmdContinue,
 		},
 	}

@@ -15,13 +15,14 @@ const taskExt = ".task"
 
 // Task is a file stored in tasks dir.
 type Task struct {
+	ID          uint16
 	UUID        uuid.UUID
 	Title       string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
 }
 
-func newTaskFromFile(filename string) (t Task, err error) {
+func readFile(filename string) (t Task, err error) {
 	base := filepath.Base(filename)
 	t.UUID, err = uuid.FromString(base[:len(base)-len(taskExt)])
 	if err != nil {
@@ -74,7 +75,7 @@ func (t *Task) setKeyVal(key, value string) (err error) {
 	return
 }
 
-// write the task to file at <dirTasks>/<ID>.task
+// write the task to file at <dirTasks>/<UUID>.task
 func (t Task) write() error {
 	path := filepath.Join(dirTasks, t.UUID.String()) + taskExt
 	f, err := os.Create(path)
@@ -100,29 +101,4 @@ func (t Task) write() error {
 		return err
 	}
 	return f.Close()
-}
-
-// allTasks returns all tasks in dirTasks.
-func (Task) allTasks() ([]Task, error) {
-	f, err := os.Open(dirTasks)
-	if err != nil {
-		return nil, err
-	}
-	defer checkClose(f)
-	names, err := f.Readdirnames(-1)
-	if err != nil {
-		return nil, err
-	}
-	var tasks []Task
-	for _, name := range names {
-		if !strings.HasSuffix(name, taskExt) {
-			continue
-		}
-		t, err := newTaskFromFile(filepath.Join(dirTasks, name))
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, t)
-	}
-	return tasks, nil
 }

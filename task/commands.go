@@ -9,61 +9,52 @@ import (
 
 // Add new task in pending state.
 func Add(title string) (id uint16, err error) {
-	id, err = nextID(dirPendingTasks)
-	if err != nil {
+	t := Task{
+		UUID:      uuid.NewV4(),
+		Title:     title,
+		CreatedAt: time.Now(),
+	}
+	if err = t.write(); err != nil {
 		return
 	}
-	pt := PendingTask{
-		ID: id,
-		Task: Task{
-			UUID:      uuid.NewV4(),
-			Title:     title,
-			CreatedAt: time.Now(),
-		},
-	}
-	if err = pt.write(); err != nil {
+	if err = t.link(dirPendingTasks); err != nil {
 		return
 	}
-	lt := &linkedTask{
-		LinkID: pt.ID,
-		Task:   pt.Task,
-	}
-	err = lt.link(dirPendingTasks)
-	return
+	return t.ID, nil
 }
 
 // ListPending returns all pending tasks.
-func ListPending() ([]PendingTask, error) {
-	tasks, err := pendingTasks()
+func ListPending() ([]Task, error) {
+	tasks, err := tasksIn(dirPendingTasks)
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(pendingTasksByCreatedAtDesc(tasks))
+	sort.Sort(byCreatedAtDesc(tasks))
 	return tasks, nil
 }
 
 // ListCompleted returns all completed tasks.
-func ListCompleted() ([]CompletedTask, error) {
-	tasks, err := completedTasks()
+func ListCompleted() ([]Task, error) {
+	tasks, err := tasksIn(dirCompletedTasks)
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(completedTasksByCompletedAtDesc(tasks))
+	sort.Sort(byCompletedAtDesc(tasks))
 	return tasks, nil
 }
 
 // Complete pending task.
 func Complete(ids []uint16) error {
-	tasks := make([]*PendingTask, 0, len(ids))
+	tasks := make([]Task, 0, len(ids))
 	for _, id := range ids {
-		t, err := getPendingTask(id)
+		t, err := readLink(dirPendingTasks, id)
 		if err != nil {
 			return err
 		}
 		tasks = append(tasks, t)
 	}
 	for _, t := range tasks {
-		err := t.complete()
+		err := t.moveLink(dirPendingTasks, dirCompletedTasks)
 		if err != nil {
 			return err
 		}
@@ -73,16 +64,16 @@ func Complete(ids []uint16) error {
 
 // Continue completed task.
 func Continue(ids []uint16) error {
-	tasks := make([]*CompletedTask, 0, len(ids))
+	tasks := make([]Task, 0, len(ids))
 	for _, id := range ids {
-		t, err := getCompletedTask(id)
+		t, err := readLink(dirCompletedTasks, id)
 		if err != nil {
 			return err
 		}
 		tasks = append(tasks, t)
 	}
 	for _, t := range tasks {
-		err := t.continueTask()
+		err := t.moveLink(dirCompletedTasks, dirPendingTasks)
 		if err != nil {
 			return err
 		}

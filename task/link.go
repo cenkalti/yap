@@ -6,16 +6,8 @@ import (
 	"strings"
 )
 
-// linkedTask is a symlink to a Task for refering tasks with a more human-friendly ID number.
-// Task IDs are random 16-bit integers that is hard to remember and type.
-// linkedTasks have separate IDs that is usually a small number.
-type linkedTask struct {
-	LinkID uint16
-	Task
-}
-
 // tasksIn returns all tasks in dir.
-func tasksIn(dir string) ([]linkedTask, error) {
+func tasksIn(dir string) ([]Task, error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, err
@@ -25,7 +17,7 @@ func tasksIn(dir string) ([]linkedTask, error) {
 	if err != nil {
 		return nil, err
 	}
-	var tasks []linkedTask
+	var tasks []Task
 	for _, name := range names {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
@@ -34,58 +26,69 @@ func tasksIn(dir string) ([]linkedTask, error) {
 		if err != nil {
 			return nil, err
 		}
-		ti, err := getLinkedTask(dir, id)
+		t, err := readLink(dir, id)
 		if err != nil {
 			return nil, err
 		}
-		tasks = append(tasks, *ti)
+		tasks = append(tasks, t)
 	}
 	return tasks, nil
 }
 
 // link writes a symlink to dir that is pointing to original task in dirTasks.
-func (t linkedTask) link(dir string) error {
+func (t *Task) link(dir string) error {
+	id, err := nextID(dirPendingTasks)
+	if err != nil {
+		return err
+	}
 	src := filepath.Join("..", "tasks", t.UUID.String()+taskExt)
-	dst := filepath.Join(dir, formatID(t.LinkID)+taskExt)
-	return os.Symlink(src, dst)
+	dst := filepath.Join(dir, formatID(id)+taskExt)
+	err = os.Symlink(src, dst)
+	if err != nil {
+		return err
+	}
+	t.ID = id
+	return nil
 }
 
 // unlink removes the symlink in dir.
-func (t linkedTask) unlink(dir string) error {
-	dst := filepath.Join(dir, formatID(t.LinkID)+taskExt)
-	return os.Remove(dst)
+func (t *Task) unlink(dir string) error {
+	dst := filepath.Join(dir, formatID(t.ID)+taskExt)
+	err := os.Remove(dst)
+	if err != nil {
+		return err
+	}
+	t.ID = 0
+	return nil
 }
 
-func (t *linkedTask) move(olddir, newdir string) error {
+func (t *Task) moveLink(olddir, newdir string) error {
 	id, err := nextID(newdir)
 	if err != nil {
 		return err
 	}
-	oldpath := filepath.Join(olddir, formatID(t.LinkID)+taskExt)
+	oldpath := filepath.Join(olddir, formatID(t.ID)+taskExt)
 	newpath := filepath.Join(newdir, formatID(id)+taskExt)
 	err = os.Rename(oldpath, newpath)
 	if err != nil {
 		return err
 	}
-	t.LinkID = id
+	t.ID = id
 	return nil
 }
 
-func getLinkedTask(dir string, id uint16) (*linkedTask, error) {
+func readLink(dir string, id uint16) (t Task, err error) {
 	filename, err := os.Readlink(filepath.Join(dir, formatID(id)+".task"))
 	if err != nil {
-		return nil, err
+		return
 	}
 	if !filepath.IsAbs(filename) {
 		filename = filepath.Join(dir, filename)
 	}
-	t, err := newTaskFromFile(filename)
+	t, err = readFile(filename)
 	if err != nil {
-		return nil, err
+		return
 	}
-	lt := linkedTask{
-		LinkID: id,
-		Task:   t,
-	}
-	return &lt, nil
+	t.ID = id
+	return t, nil
 }

@@ -1,16 +1,16 @@
 package task
 
-type pendingTasksByCreatedAtDesc []PendingTask
+type byCreatedAtDesc []Task
 
-func (t pendingTasksByCreatedAtDesc) Len() int           { return len(t) }
-func (t pendingTasksByCreatedAtDesc) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
-func (t pendingTasksByCreatedAtDesc) Less(i, j int) bool { return t[i].CreatedAt.After(t[j].CreatedAt) }
+func (t byCreatedAtDesc) Len() int           { return len(t) }
+func (t byCreatedAtDesc) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t byCreatedAtDesc) Less(i, j int) bool { return t[i].CreatedAt.After(t[j].CreatedAt) }
 
-type completedTasksByCompletedAtDesc []CompletedTask
+type byCompletedAtDesc []Task
 
-func (t completedTasksByCompletedAtDesc) Len() int      { return len(t) }
-func (t completedTasksByCompletedAtDesc) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
-func (t completedTasksByCompletedAtDesc) Less(i, j int) bool {
+func (t byCompletedAtDesc) Len() int      { return len(t) }
+func (t byCompletedAtDesc) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+func (t byCompletedAtDesc) Less(i, j int) bool {
 	ti := t[i].CompletedAt
 	tj := t[j].CompletedAt
 	if ti == nil || tj == nil {

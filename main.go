@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -132,7 +131,7 @@ func cmdListPending(c *cli.Context) {
 	table := newTable("ID", "Title", "Due Date")
 	for _, v := range tasks {
 		table.Append([]string{
-			strconv.FormatUint(uint64(v.ID), 10),
+			task.FormatID(v.ID),
 			v.Title,
 			task.FormatDate(v.DueDate),
 		})
@@ -148,7 +147,7 @@ func cmdListCompleted(c *cli.Context) {
 	table := newTable("ID", "Title", "Completed At")
 	for _, v := range tasks {
 		table.Append([]string{
-			strconv.FormatUint(uint64(v.ID), 10),
+			task.FormatID(v.ID),
 			v.Title,
 			task.FormatDateTime(v.CompletedAt),
 		})
@@ -181,11 +180,11 @@ func cmdContinue(c *cli.Context) {
 func parseIDs(args []string) ([]uint16, error) {
 	ids := make([]uint16, 0, len(args))
 	for _, arg := range args {
-		id, err := strconv.ParseUint(arg, 10, 16)
+		id, err := task.ParseID(arg)
 		if err != nil {
 			return nil, err
 		}
-		ids = append(ids, uint16(id))
+		ids = append(ids, id)
 	}
 	return ids, nil
 }

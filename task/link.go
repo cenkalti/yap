@@ -22,7 +22,7 @@ func tasksIn(dir string) ([]Task, error) {
 		if !strings.HasSuffix(name, taskExt) {
 			continue
 		}
-		id, err := parseID(name[:len(name)-len(taskExt)])
+		id, err := ParseID(name[:len(name)-len(taskExt)])
 		if err != nil {
 			return nil, err
 		}
@@ -42,7 +42,7 @@ func (t *Task) link(dir string) error {
 		return err
 	}
 	src := filepath.Join("..", "tasks", t.UUID.String()+taskExt)
-	dst := filepath.Join(dir, formatID(id)+taskExt)
+	dst := filepath.Join(dir, FormatID(id)+taskExt)
 	err = os.Symlink(src, dst)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (t *Task) link(dir string) error {
 
 // unlink removes the symlink in dir.
 func (t *Task) unlink(dir string) error {
-	dst := filepath.Join(dir, formatID(t.ID)+taskExt)
+	dst := filepath.Join(dir, FormatID(t.ID)+taskExt)
 	err := os.Remove(dst)
 	if err != nil {
 		return err
@@ -67,8 +67,8 @@ func (t *Task) moveLink(olddir, newdir string) error {
 	if err != nil {
 		return err
 	}
-	oldpath := filepath.Join(olddir, formatID(t.ID)+taskExt)
-	newpath := filepath.Join(newdir, formatID(id)+taskExt)
+	oldpath := filepath.Join(olddir, FormatID(t.ID)+taskExt)
+	newpath := filepath.Join(newdir, FormatID(id)+taskExt)
 	err = os.Rename(oldpath, newpath)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (t *Task) moveLink(olddir, newdir string) error {
 }
 
 func readLink(dir string, id uint16) (t Task, err error) {
-	filename, err := os.Readlink(filepath.Join(dir, formatID(id)+".task"))
+	filename, err := os.Readlink(filepath.Join(dir, FormatID(id)+".task"))
 	if err != nil {
 		return
 	}

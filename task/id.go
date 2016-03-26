@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-func parseID(s string) (uint16, error) {
+func ParseID(s string) (uint16, error) {
 	i, err := strconv.ParseUint(s, 10, 16)
 	return uint16(i), err
 }
 
-func formatID(i uint16) string {
+func FormatID(i uint16) string {
 	return strconv.FormatUint(uint64(i), 10)
 }
 
@@ -32,7 +32,7 @@ func nextID(dir string) (id uint16, err error) {
 			continue
 		}
 		strID := name[:len(name)-len(taskExt)]
-		id, err = parseID(strID)
+		id, err = ParseID(strID)
 		if err != nil {
 			return
 		}

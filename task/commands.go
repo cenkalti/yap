@@ -8,11 +8,13 @@ import (
 )
 
 // Add new task in pending state.
-func Add(title string) (id uint16, err error) {
+func Add(title string, dueDate, waitDate *time.Time) (id uint16, err error) {
 	t := Task{
 		UUID:      uuid.NewV4(),
 		Title:     title,
 		CreatedAt: time.Now(),
+		DueDate:   dueDate,
+		WaitDate:  waitDate,
 	}
 	if err = t.write(); err != nil {
 		return

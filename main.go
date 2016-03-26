@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
@@ -45,6 +46,16 @@ func main() {
 			Aliases: []string{"a"},
 			Usage:   "add new task",
 			Action:  cmdAdd,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "due",
+					Usage: "due date. complete task before this date",
+				},
+				cli.StringFlag{
+					Name:  "wait",
+					Usage: "wait date. task will be hidden until this date",
+				},
+			},
 		},
 		{
 			Name:    "list",
@@ -91,11 +102,26 @@ func cmdAdd(c *cli.Context) {
 		return
 	}
 	title := strings.Join(c.Args(), " ")
-	id, err := task.Add(title)
+	dueDate := parseDate(c.String("due"))
+	waitDate := parseDate(c.String("wait"))
+	id, err := task.Add(title, dueDate, waitDate)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("id:", id)
+}
+
+func parseDate(s string) *time.Time {
+	if s == "" {
+		return nil
+	}
+	var t time.Time
+	var err error
+	t, err = task.ParseDate(s)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &t
 }
 
 func cmdListPending(c *cli.Context) {
@@ -103,9 +129,13 @@ func cmdListPending(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	table := newTable("ID", "Title")
+	table := newTable("ID", "Title", "Due Date")
 	for _, v := range tasks {
-		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
+		var dueDate string
+		if v.DueDate != nil {
+			dueDate = v.DueDate.String()
+		}
+		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title, dueDate})
 	}
 	table.Render()
 }

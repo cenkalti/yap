@@ -20,6 +20,8 @@ type Task struct {
 	Title       string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
+	DueDate     *time.Time
+	WaitDate    *time.Time
 }
 
 func readFile(filename string) (t Task, err error) {
@@ -69,6 +71,20 @@ func (t *Task) setKeyVal(key, value string) (err error) {
 			return
 		}
 		t.CompletedAt = &ctime
+	case "due_date":
+		var ctime time.Time
+		ctime, err = time.Parse(dateFormat, value)
+		if err != nil {
+			return
+		}
+		t.DueDate = &ctime
+	case "wait_date":
+		var ctime time.Time
+		ctime, err = time.Parse(dateFormat, value)
+		if err != nil {
+			return
+		}
+		t.WaitDate = &ctime
 	default:
 		err = errors.New("invalid key")
 	}
@@ -91,6 +107,16 @@ func (t Task) write() error {
 	}
 	if t.CompletedAt != nil {
 		if _, err = w.WriteString("completed_at " + t.CompletedAt.Format(time.RFC3339Nano) + "\n"); err != nil {
+			return err
+		}
+	}
+	if t.DueDate != nil {
+		if _, err = w.WriteString("due_date " + t.DueDate.Format(dateFormat) + "\n"); err != nil {
+			return err
+		}
+	}
+	if t.WaitDate != nil {
+		if _, err = w.WriteString("wait_date " + t.WaitDate.Format(dateFormat) + "\n"); err != nil {
 			return err
 		}
 	}

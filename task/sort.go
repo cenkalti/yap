@@ -18,3 +18,16 @@ func (t byCompletedAtDesc) Less(i, j int) bool {
 	}
 	return ti.After(*tj)
 }
+
+type byWaitDateAsc []Task
+
+func (t byWaitDateAsc) Len() int      { return len(t) }
+func (t byWaitDateAsc) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+func (t byWaitDateAsc) Less(i, j int) bool {
+	ti := t[i].WaitDate
+	tj := t[j].WaitDate
+	if ti == nil || tj == nil {
+		return false
+	}
+	return ti.Before(*tj)
+}

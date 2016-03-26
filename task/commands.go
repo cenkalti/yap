@@ -31,8 +31,16 @@ func ListPending() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(byCreatedAtDesc(tasks))
-	return tasks, nil
+	pendingTasks := make([]Task, 0, len(tasks))
+	now := time.Now()
+	for _, t := range tasks {
+		if t.WaitDate != nil && t.WaitDate.After(now) {
+			continue
+		}
+		pendingTasks = append(pendingTasks, t)
+	}
+	sort.Sort(byCreatedAtDesc(pendingTasks))
+	return pendingTasks, nil
 }
 
 // ListCompleted returns all completed tasks.
@@ -43,6 +51,27 @@ func ListCompleted() ([]Task, error) {
 	}
 	sort.Sort(byCompletedAtDesc(tasks))
 	return tasks, nil
+}
+
+// ListWaiting returns all waiting tasks.
+func ListWaiting() ([]Task, error) {
+	tasks, err := tasksIn(dirPendingTasks)
+	if err != nil {
+		return nil, err
+	}
+	waitingTasks := make([]Task, 0, len(tasks))
+	now := time.Now()
+	for _, t := range tasks {
+		if t.WaitDate == nil {
+			continue
+		}
+		if t.WaitDate.Before(now) {
+			continue
+		}
+		waitingTasks = append(waitingTasks, t)
+	}
+	sort.Sort(byWaitDateAsc(waitingTasks))
+	return waitingTasks, nil
 }
 
 // Complete pending task.

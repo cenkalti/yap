@@ -73,6 +73,12 @@ func main() {
 					Usage:   "list completed tasks",
 					Action:  cmdListCompleted,
 				},
+				{
+					Name:    "waiting",
+					Aliases: []string{"w"},
+					Usage:   "list waiting tasks",
+					Action:  cmdListWaiting,
+				},
 			},
 		},
 		{
@@ -128,12 +134,12 @@ func cmdListPending(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	table := newTable("ID", "Title", "Due Date")
-	for _, v := range tasks {
+	table := newTable("ID", "Title", "Due date")
+	for _, t := range tasks {
 		table.Append([]string{
-			task.FormatID(v.ID),
-			v.Title,
-			task.FormatDate(v.DueDate),
+			task.FormatID(t.ID),
+			t.Title,
+			task.FormatDate(t.DueDate),
 		})
 	}
 	table.Render()
@@ -144,12 +150,29 @@ func cmdListCompleted(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	table := newTable("ID", "Title", "Completed At")
-	for _, v := range tasks {
+	table := newTable("ID", "Title", "Completed at")
+	for _, t := range tasks {
 		table.Append([]string{
-			task.FormatID(v.ID),
-			v.Title,
-			task.FormatDateTime(v.CompletedAt),
+			task.FormatID(t.ID),
+			t.Title,
+			task.FormatDateTime(t.CompletedAt),
+		})
+	}
+	table.Render()
+}
+
+func cmdListWaiting(c *cli.Context) {
+	tasks, err := task.ListWaiting()
+	if err != nil {
+		log.Fatal(err)
+	}
+	table := newTable("ID", "Title", "Wait date", "Due date")
+	for _, t := range tasks {
+		table.Append([]string{
+			task.FormatID(t.ID),
+			t.Title,
+			task.FormatDate(t.WaitDate),
+			task.FormatDate(t.DueDate),
 		})
 	}
 	table.Render()

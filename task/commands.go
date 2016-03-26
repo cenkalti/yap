@@ -56,7 +56,13 @@ func Complete(ids []uint16) error {
 		tasks = append(tasks, t)
 	}
 	for _, t := range tasks {
-		err := t.moveLink(dirPendingTasks, dirCompletedTasks)
+		now := time.Now()
+		t.CompletedAt = &now
+		err := t.write()
+		if err != nil {
+			return err
+		}
+		err = t.moveLink(dirPendingTasks, dirCompletedTasks)
 		if err != nil {
 			return err
 		}
@@ -75,7 +81,12 @@ func Continue(ids []uint16) error {
 		tasks = append(tasks, t)
 	}
 	for _, t := range tasks {
-		err := t.moveLink(dirCompletedTasks, dirPendingTasks)
+		t.CompletedAt = nil
+		err := t.write()
+		if err != nil {
+			return err
+		}
+		err = t.moveLink(dirCompletedTasks, dirPendingTasks)
 		if err != nil {
 			return err
 		}

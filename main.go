@@ -131,11 +131,11 @@ func cmdListPending(c *cli.Context) {
 	}
 	table := newTable("ID", "Title", "Due Date")
 	for _, v := range tasks {
-		var dueDate string
-		if v.DueDate != nil {
-			dueDate = v.DueDate.String()
-		}
-		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title, dueDate})
+		table.Append([]string{
+			strconv.FormatUint(uint64(v.ID), 10),
+			v.Title,
+			task.FormatDate(v.DueDate),
+		})
 	}
 	table.Render()
 }
@@ -145,9 +145,13 @@ func cmdListCompleted(c *cli.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	table := newTable("ID", "Title")
+	table := newTable("ID", "Title", "Completed At")
 	for _, v := range tasks {
-		table.Append([]string{strconv.FormatUint(uint64(v.ID), 10), v.Title})
+		table.Append([]string{
+			strconv.FormatUint(uint64(v.ID), 10),
+			v.Title,
+			task.FormatDateTime(v.CompletedAt),
+		})
 	}
 	table.Render()
 }

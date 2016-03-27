@@ -39,7 +39,7 @@ func ListPending() ([]Task, error) {
 		}
 		pendingTasks = append(pendingTasks, t)
 	}
-	sort.Sort(byCreatedAtDesc(pendingTasks))
+	sort.Sort(byCreatedAtDesc{pendingTasks})
 	return pendingTasks, nil
 }
 
@@ -49,7 +49,7 @@ func ListCompleted() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(byCompletedAtDesc(tasks))
+	sort.Sort(byCompletedAtDesc{tasks})
 	return tasks, nil
 }
 
@@ -70,7 +70,7 @@ func ListWaiting() ([]Task, error) {
 		}
 		waitingTasks = append(waitingTasks, t)
 	}
-	sort.Sort(byWaitDateAsc(waitingTasks))
+	sort.Sort(byWaitDateAsc{waitingTasks})
 	return waitingTasks, nil
 }
 

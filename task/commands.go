@@ -1,7 +1,6 @@
 package task
 
 import (
-	"sort"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -39,7 +38,7 @@ func ListPending() ([]Task, error) {
 		}
 		pendingTasks = append(pendingTasks, t)
 	}
-	sort.Sort(byCreatedAtDesc{pendingTasks})
+	orderedBy(increasingDueDate, increasingCreatedAt).Sort(pendingTasks)
 	return pendingTasks, nil
 }
 
@@ -49,7 +48,7 @@ func ListCompleted() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	sort.Sort(byCompletedAtDesc{tasks})
+	orderedBy(decreasingCompletedAt).Sort(tasks)
 	return tasks, nil
 }
 
@@ -70,7 +69,7 @@ func ListWaiting() ([]Task, error) {
 		}
 		waitingTasks = append(waitingTasks, t)
 	}
-	sort.Sort(byWaitDateAsc{waitingTasks})
+	orderedBy(increasingWaitDate).Sort(waitingTasks)
 	return waitingTasks, nil
 }
 

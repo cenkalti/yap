@@ -215,7 +215,6 @@ func parseIDs(args []string) ([]uint16, error) {
 func newTable(fields ...string) *tablewriter.Table {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetBorder(false)
-	table.SetHeaderLine(false)
 	table.SetColumnSeparator("")
 	table.SetAutoFormatHeaders(false)
 	table.SetHeader(fields)

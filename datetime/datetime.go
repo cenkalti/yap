@@ -1,4 +1,4 @@
-package task
+package datetime
 
 import (
 	"errors"
@@ -19,14 +19,14 @@ type DateTime struct {
 	HasTime bool
 }
 
-func NewDateTime(t time.Time) DateTime {
+func New(t time.Time) DateTime {
 	return DateTime{
 		Time:    t,
 		HasTime: true,
 	}
 }
 
-func ParseDateTime(value string) (dt DateTime, err error) {
+func Parse(value string) (dt DateTime, err error) {
 	switch len(value) {
 	case len(dateLayout):
 		dt.Time, err = time.Parse(dateLayout, value)

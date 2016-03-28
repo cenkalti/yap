@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/yap/datetime"
 	"github.com/satori/go.uuid"
 )
 
@@ -20,8 +21,8 @@ type Task struct {
 	Title       string
 	CreatedAt   time.Time
 	CompletedAt *time.Time
-	DueDate     *DateTime
-	WaitDate    *DateTime
+	DueDate     *datetime.DateTime
+	WaitDate    *datetime.DateTime
 }
 
 func readFile(filename string) (t Task, err error) {
@@ -72,13 +73,13 @@ func (t *Task) setKeyVal(key, value string) (err error) {
 		}
 		t.CompletedAt = &ctime
 	case "due_date":
-		dt, err := ParseDateTime(value)
+		dt, err := datetime.Parse(value)
 		if err != nil {
 			return err
 		}
 		t.DueDate = &dt
 	case "wait_date":
-		dt, err := ParseDateTime(value)
+		dt, err := datetime.Parse(value)
 		if err != nil {
 			return err
 		}

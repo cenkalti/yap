@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/yap/datetime"
 	"github.com/cenkalti/yap/task"
 	"github.com/codegangsta/cli"
 	"github.com/olekukonko/tablewriter"
@@ -116,18 +117,18 @@ func cmdAdd(c *cli.Context) {
 	fmt.Println("id:", id)
 }
 
-func parseDateTime(s string) *task.DateTime {
+func parseDateTime(s string) *datetime.DateTime {
 	if s == "" {
 		return nil
 	}
-	dt, err := task.ParseDateTime(s)
+	dt, err := datetime.Parse(s)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return &dt
 }
 
-func formatDateTime(dt *task.DateTime) string {
+func formatDateTime(dt *datetime.DateTime) string {
 	if dt == nil {
 		return ""
 	}
@@ -138,7 +139,7 @@ func formatDate(t *time.Time) string {
 	if t == nil {
 		return ""
 	}
-	return task.NewDateTime(*t).String()
+	return datetime.New(*t).String()
 }
 
 func cmdListPending(c *cli.Context) {

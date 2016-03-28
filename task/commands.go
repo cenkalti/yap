@@ -3,11 +3,12 @@ package task
 import (
 	"time"
 
+	"github.com/cenkalti/yap/datetime"
 	"github.com/satori/go.uuid"
 )
 
 // Add new task in pending state.
-func Add(title string, dueDate, waitDate *DateTime) (id uint16, err error) {
+func Add(title string, dueDate, waitDate *datetime.DateTime) (id uint16, err error) {
 	t := Task{
 		UUID:      uuid.NewV4(),
 		Title:     title,

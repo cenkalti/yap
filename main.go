@@ -107,8 +107,8 @@ func cmdAdd(c *cli.Context) {
 		return
 	}
 	title := strings.Join(c.Args(), " ")
-	dueDate := parseDate(c.String("due"))
-	waitDate := parseDate(c.String("wait"))
+	dueDate := parseDateTime(c.String("due"))
+	waitDate := parseDateTime(c.String("wait"))
 	id, err := task.Add(title, dueDate, waitDate)
 	if err != nil {
 		log.Fatal(err)
@@ -116,17 +116,29 @@ func cmdAdd(c *cli.Context) {
 	fmt.Println("id:", id)
 }
 
-func parseDate(s string) *time.Time {
+func parseDateTime(s string) *task.DateTime {
 	if s == "" {
 		return nil
 	}
-	var t time.Time
-	var err error
-	t, err = task.ParseDate(s)
+	dt, err := task.ParseDateTime(s)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &t
+	return &dt
+}
+
+func formatDateTime(dt *task.DateTime) string {
+	if dt == nil {
+		return ""
+	}
+	return dt.String()
+}
+
+func formatDate(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return task.NewDateTime(*t).String()
 }
 
 func cmdListPending(c *cli.Context) {
@@ -139,7 +151,7 @@ func cmdListPending(c *cli.Context) {
 		table.Append([]string{
 			task.FormatID(t.ID),
 			t.Title,
-			task.FormatDate(t.DueDate),
+			formatDateTime(t.DueDate),
 		})
 	}
 	table.Render()
@@ -155,7 +167,7 @@ func cmdListCompleted(c *cli.Context) {
 		table.Append([]string{
 			task.FormatID(t.ID),
 			t.Title,
-			task.FormatDateTime(t.CompletedAt),
+			formatDate(t.CompletedAt),
 		})
 	}
 	table.Render()
@@ -171,8 +183,8 @@ func cmdListWaiting(c *cli.Context) {
 		table.Append([]string{
 			task.FormatID(t.ID),
 			t.Title,
-			task.FormatDate(t.WaitDate),
-			task.FormatDate(t.DueDate),
+			formatDateTime(t.WaitDate),
+			formatDateTime(t.DueDate),
 		})
 	}
 	table.Render()

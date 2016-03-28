@@ -75,7 +75,7 @@ func increasingWaitDate(t1, t2 Task) bool {
 	if t1.WaitDate == nil || t2.WaitDate == nil {
 		return false
 	}
-	return t1.WaitDate.Before(*t2.WaitDate)
+	return t1.WaitDate.Before(t2.WaitDate.Time)
 }
 
 func increasingDueDate(t1, t2 Task) bool {
@@ -85,5 +85,5 @@ func increasingDueDate(t1, t2 Task) bool {
 	if t2.DueDate == nil {
 		return true
 	}
-	return t1.DueDate.Before(*t2.DueDate)
+	return t1.DueDate.Before(t2.DueDate.Time)
 }

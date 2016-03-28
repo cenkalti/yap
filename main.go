@@ -22,6 +22,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "yap"
 	app.Usage = "todo app"
+	app.HideHelp = true
 	app.Authors = []cli.Author{
 		{
 			Name:  "Cenk Altı",

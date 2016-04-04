@@ -55,7 +55,6 @@ func replaceTime(t, tt time.Time) time.Time {
 func (dt DateTime) String() string {
 	if dt.HasTime {
 		return dt.Format(dateTimeLayout)
-	} else {
-		return dt.Format(dateLayout)
 	}
+	return dt.Format(dateLayout)
 }

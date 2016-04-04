@@ -73,15 +73,17 @@ func (t *Task) setKeyVal(key, value string) (err error) {
 		}
 		t.CompletedAt = &ctime
 	case "due_date":
-		dt, err := datetime.Parse(value)
+		var dt datetime.DateTime
+		dt, err = datetime.Parse(value)
 		if err != nil {
-			return err
+			return
 		}
 		t.DueDate = &dt
 	case "wait_date":
-		dt, err := datetime.Parse(value)
+		var dt datetime.DateTime
+		dt, err = datetime.Parse(value)
 		if err != nil {
-			return err
+			return
 		}
 		t.WaitDate = &dt
 	default:

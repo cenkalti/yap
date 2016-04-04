@@ -129,22 +129,24 @@ func (t Task) writeFields(w io.Writer) error {
 			}
 			fval = fval.Elem()
 		}
-		iface := fval.Interface()
-		var s string
-		switch fval.Type() {
-		case reflect.TypeOf(""):
-			s = iface.(string)
-		case reflect.TypeOf(time.Time{}):
-			s = iface.(time.Time).Format(time.RFC3339Nano)
-		case reflect.TypeOf(datetime.DateTime{}):
-			s = iface.(datetime.DateTime).String()
-		default:
-			return errors.New("unknown type")
-		}
-		_, err := w.Write([]byte(tag + " " + s + "\n"))
+		_, err := w.Write([]byte(tag + " " + stringValue(fval) + "\n"))
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func stringValue(v reflect.Value) string {
+	i := v.Interface()
+	switch v.Type() {
+	case reflect.TypeOf(""):
+		return i.(string)
+	case reflect.TypeOf(time.Time{}):
+		return i.(time.Time).Format(time.RFC3339Nano)
+	case reflect.TypeOf(datetime.DateTime{}):
+		return i.(datetime.DateTime).String()
+	default:
+		panic("unknown type")
+	}
 }

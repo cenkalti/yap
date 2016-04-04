@@ -56,40 +56,41 @@ func readFile(filename string) (t Task, err error) {
 	return
 }
 
-func (t *Task) setKeyVal(key, value string) (err error) {
-	switch key {
-	case "title":
+var parsers = map[string]func(t *Task, value string) error{
+	"title": func(t *Task, value string) (err error) {
 		t.Title = value
-	case "created_at":
+		return
+	},
+	"created_at": func(t *Task, value string) (err error) {
 		t.CreatedAt, err = time.Parse(time.RFC3339Nano, value)
-		if err != nil {
-			return
-		}
-	case "completed_at":
+		return
+	},
+	"completed_at": func(t *Task, value string) (err error) {
 		var ctime time.Time
 		ctime, err = time.Parse(time.RFC3339Nano, value)
-		if err != nil {
-			return
-		}
 		t.CompletedAt = &ctime
-	case "due_date":
+		return
+	},
+	"due_date": func(t *Task, value string) (err error) {
 		var dt datetime.DateTime
 		dt, err = datetime.Parse(value)
-		if err != nil {
-			return
-		}
 		t.DueDate = &dt
-	case "wait_date":
+		return
+	},
+	"wait_date": func(t *Task, value string) (err error) {
 		var dt datetime.DateTime
 		dt, err = datetime.Parse(value)
-		if err != nil {
-			return
-		}
 		t.WaitDate = &dt
-	default:
-		err = errors.New("invalid key")
+		return
+	},
+}
+
+func (t *Task) setKeyVal(key, value string) error {
+	f, ok := parsers[key]
+	if !ok {
+		return errors.New("invalid key")
 	}
-	return
+	return f(t, value)
 }
 
 // write the task to file at <dirTasks>/<UUID>.task

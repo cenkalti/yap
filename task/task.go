@@ -139,7 +139,7 @@ func (t Task) writeFields(w io.Writer) error {
 		case reflect.TypeOf(datetime.DateTime{}):
 			s = iface.(datetime.DateTime).String()
 		default:
-			return errors.New("invalid key")
+			return errors.New("unknown type")
 		}
 		_, err := w.Write([]byte(tag + " " + s + "\n"))
 		if err != nil {

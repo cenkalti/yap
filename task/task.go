@@ -138,6 +138,8 @@ func (t Task) writeFields(w io.Writer) error {
 			s = iface.(time.Time).Format(time.RFC3339Nano)
 		case reflect.TypeOf(datetime.DateTime{}):
 			s = iface.(datetime.DateTime).String()
+		default:
+			return errors.New("invalid key")
 		}
 		_, err := w.Write([]byte(tag + " " + s + "\n"))
 		if err != nil {

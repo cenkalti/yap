@@ -3,8 +3,10 @@ package task
 import (
 	"bufio"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -18,11 +20,11 @@ const taskExt = ".task"
 type Task struct {
 	ID          uint16
 	UUID        uuid.UUID
-	Title       string
-	CreatedAt   time.Time
-	CompletedAt *time.Time
-	DueDate     *datetime.DateTime
-	WaitDate    *datetime.DateTime
+	Title       string             `key:"title"`
+	CreatedAt   time.Time          `key:"created_at"`
+	CompletedAt *time.Time         `key:"completed_at"`
+	DueDate     *datetime.DateTime `key:"due_date"`
+	WaitDate    *datetime.DateTime `key:"wait_date"`
 }
 
 func readFile(filename string) (t Task, err error) {
@@ -101,26 +103,8 @@ func (t Task) write() error {
 		return err
 	}
 	w := bufio.NewWriter(f)
-	if _, err = w.WriteString("title " + t.Title + "\n"); err != nil {
+	if err = t.writeFields(w); err != nil {
 		return err
-	}
-	if _, err = w.WriteString("created_at " + t.CreatedAt.Format(time.RFC3339Nano) + "\n"); err != nil {
-		return err
-	}
-	if t.CompletedAt != nil {
-		if _, err = w.WriteString("completed_at " + t.CompletedAt.Format(time.RFC3339Nano) + "\n"); err != nil {
-			return err
-		}
-	}
-	if t.DueDate != nil {
-		if _, err = w.WriteString("due_date " + t.DueDate.String() + "\n"); err != nil {
-			return err
-		}
-	}
-	if t.WaitDate != nil {
-		if _, err = w.WriteString("wait_date " + t.WaitDate.String() + "\n"); err != nil {
-			return err
-		}
 	}
 	if err = w.Flush(); err != nil {
 		return err
@@ -129,4 +113,36 @@ func (t Task) write() error {
 		return err
 	}
 	return f.Close()
+}
+
+func (t Task) writeFields(w io.Writer) error {
+	val := reflect.ValueOf(t)
+	for i := 0; i < val.NumField(); i++ {
+		tag := val.Type().Field(i).Tag.Get("key")
+		if tag == "" {
+			continue
+		}
+		fval := val.Field(i)
+		if fval.Kind() == reflect.Ptr {
+			if fval.IsNil() {
+				continue
+			}
+			fval = fval.Elem()
+		}
+		iface := fval.Interface()
+		var s string
+		switch fval.Type() {
+		case reflect.TypeOf(""):
+			s = iface.(string)
+		case reflect.TypeOf(time.Time{}):
+			s = iface.(time.Time).Format(time.RFC3339Nano)
+		case reflect.TypeOf(datetime.DateTime{}):
+			s = iface.(datetime.DateTime).String()
+		}
+		_, err := w.Write([]byte(tag + " " + s + "\n"))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

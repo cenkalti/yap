@@ -100,32 +100,41 @@ func (t *Task) setKeys(kv map[string]string) error {
 	return nil
 }
 
-// TODO make map
-func (t *Task) parseField(val reflect.Value, sval string) (err error) {
-	typ := val.Type()
-	switch typ {
-	case reflect.TypeOf(""):
-		val.SetString(sval)
-	case reflect.TypeOf(time.Time{}):
-		var tm time.Time
-		tm, err = time.Parse(time.RFC3339Nano, sval)
-		val.Set(reflect.ValueOf(tm))
-	case reflect.TypeOf(&time.Time{}):
-		var tm time.Time
-		tm, err = time.Parse(time.RFC3339Nano, sval)
-		val.Set(reflect.ValueOf(&tm))
-	case reflect.TypeOf(datetime.DateTime{}):
-		var dt datetime.DateTime
-		dt, err = datetime.Parse(sval)
-		val.Set(reflect.ValueOf(dt))
-	case reflect.TypeOf(&datetime.DateTime{}):
-		var dt datetime.DateTime
-		dt, err = datetime.Parse(sval)
-		val.Set(reflect.ValueOf(&dt))
-	default:
+var parsers = map[reflect.Type]func(s string) (interface{}, error){
+	reflect.TypeOf(""): func(s string) (interface{}, error) {
+		return s, nil
+	},
+	reflect.TypeOf(time.Time{}): func(s string) (interface{}, error) {
+		return time.Parse(time.RFC3339Nano, s)
+	},
+	reflect.TypeOf(datetime.DateTime{}): func(s string) (interface{}, error) {
+		return datetime.Parse(s)
+	},
+}
+
+func (t *Task) parseField(field reflect.Value, str string) (err error) {
+	var typ reflect.Type
+	if field.Kind() == reflect.Ptr {
+		typ = field.Type().Elem()
+	} else {
+		typ = field.Type()
+	}
+	parser, ok := parsers[typ]
+	if !ok {
 		panic("unknown type: " + typ.String())
 	}
-	return
+	iface, err := parser(str)
+	if err != nil {
+		return err
+	}
+	val := reflect.ValueOf(iface)
+	if field.Kind() == reflect.Ptr {
+		ptr := reflect.New(typ)
+		ptr.Elem().Set(val)
+		val = ptr
+	}
+	field.Set(val)
+	return nil
 }
 
 // write the task to file at <dirTasks>/<UUID>.task
@@ -155,14 +164,14 @@ func (t Task) writeFields(w io.Writer) error {
 		if tag == "" {
 			continue
 		}
-		fval := val.Field(i)
-		if fval.Kind() == reflect.Ptr {
-			if fval.IsNil() {
+		field := val.Field(i)
+		if field.Kind() == reflect.Ptr {
+			if field.IsNil() {
 				continue
 			}
-			fval = fval.Elem()
+			field = field.Elem()
 		}
-		_, err := w.Write([]byte(tag + " " + stringValue(fval) + "\n"))
+		_, err := w.Write([]byte(tag + " " + stringValue(field) + "\n"))
 		if err != nil {
 			return err
 		}
@@ -170,17 +179,16 @@ func (t Task) writeFields(w io.Writer) error {
 	return nil
 }
 
-// TODO make map
+var formatters = map[reflect.Type]func(i interface{}) string{
+	reflect.TypeOf(""):                  func(i interface{}) string { return i.(string) },
+	reflect.TypeOf(time.Time{}):         func(i interface{}) string { return i.(time.Time).Format(time.RFC3339Nano) },
+	reflect.TypeOf(datetime.DateTime{}): func(i interface{}) string { return i.(datetime.DateTime).String() },
+}
+
 func stringValue(v reflect.Value) string {
-	i := v.Interface()
-	switch v.Type() {
-	case reflect.TypeOf(""):
-		return i.(string)
-	case reflect.TypeOf(time.Time{}):
-		return i.(time.Time).Format(time.RFC3339Nano)
-	case reflect.TypeOf(datetime.DateTime{}):
-		return i.(datetime.DateTime).String()
-	default:
+	f, ok := formatters[v.Type()]
+	if !ok {
 		panic("unknown type")
 	}
+	return f(v.Interface())
 }

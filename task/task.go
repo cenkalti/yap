@@ -50,7 +50,6 @@ func readFile(filename string) (t Task, err error) {
 		if text == "" {
 			continue
 		}
-		// TODO test "title                      asdf" case in file
 		parts := strings.SplitN(text, " ", 2)
 		if len(parts) != 2 {
 			err = errors.New("invalid line: " + text)
